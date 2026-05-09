@@ -29,9 +29,24 @@ export async function render({ ym, name }, root) {
     const Highcharts = await loadHighcharts();
     const ohlc = f.candles.map(c => [c[0] * 1000, c[1], c[2], c[3], c[4]]);
     const vol = f.candles.map(c => [c[0] * 1000, c[5]]);
+    
+    Highcharts.setOptions({ time: { timezone: 'America/New_York' } });
     Highcharts.stockChart('chart', {
         rangeSelector: { selected: 1 },
         title: { text: `${f.symbol} ${f.timeframe}` },
+        plotOptions: {
+            series: {
+                dataGrouping: { enabled: false },
+            },
+            candlestick: {
+                gapSize: 1.5,
+                gapUnit: 'relative',
+            },
+            column: {
+                gapSize: 1.5,
+                gapUnit: 'relative',
+            },
+        },        
         yAxis: [
             { labels: { align: 'right', x: -3 }, title: { text: 'OHLC' }, height: '70%', lineWidth: 2 },
             { labels: { align: 'right', x: -3 }, title: { text: 'Volume' }, top: '72%', height: '28%', offset: 0, lineWidth: 2 }
@@ -39,6 +54,6 @@ export async function render({ ym, name }, root) {
         series: [
             { type: 'candlestick', name: f.symbol, data: ohlc, dataGrouping: { enabled: false } },
             { type: 'column', name: 'Volume', data: vol, yAxis: 1, dataGrouping: { enabled: false } }
-        ]
+        ],
     });
 }
