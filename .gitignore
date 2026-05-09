@@ -1,0 +1,14 @@
+node_modules/
+/package-lock.json
+*.log
+.env
+.DS_Store
+.history
+.claude
+
+# windows thumbnail cache
+Thumbs.db
+
+/docs/local
+/data
+/screenshots

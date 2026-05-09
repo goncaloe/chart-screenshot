@@ -1,0 +1,12 @@
+{
+  "name": "chart-screenshot",
+  "scripts": {
+    "start": "node web/server.js"
+  },
+  "dependencies": {
+    "express": "^5.1.0",
+    "highcharts": "^12.6.0",
+    "ib-tws-api": "file:../ib-tws-api",
+    "minimist": "^1.2.8"
+  }
+}
