@@ -104,6 +104,14 @@ function ymOfMs(ms) {
     return `${p.year}-${p.month}`;
 }
 
+function utcNyOffset() {
+    const date = new Date();
+    const utc = new Date(date.toLocaleString('en-US', { timeZone: 'UTC' }))
+    const ny  = new Date(date.toLocaleString('en-US', { timeZone: 'America/New_York' }))
+    return (ny - utc);
+}
+
+
 module.exports = {
     NY_TZ,
     HOLIDAYS_2026,
@@ -116,5 +124,6 @@ module.exports = {
     tfMeta,
     formatIbEndDateTime,
     ymOfMs,
-    nyDateKey
+    nyDateKey,
+    utcNyOffset
 };

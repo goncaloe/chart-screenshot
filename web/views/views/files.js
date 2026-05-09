@@ -19,7 +19,14 @@ export async function render({ ym }, root) {
         </div>
         ${files.length ? `<table>
             <thead><tr>
-                <th>Symbol</th><th>TF</th><th>Count</th><th>First (NY)</th><th>Last (NY)</th><th>Size</th><th>Activity</th>
+                <th>Symbol</th>
+                <th>TF</th>
+                <th>Count</th>
+                <th>First (NY)</th>
+                <th>Last (NY)</th>
+                <th>Size</th>
+                <th>Candles</th>
+                <th></th>
             </tr></thead>
             <tbody></tbody>
         </table>` : `<p class="muted">No files in this folder.</p>`}`;
@@ -35,7 +42,8 @@ export async function render({ ym }, root) {
             <td>${f.firstTs ? formatNYLocal(f.firstTs) : '-'}</td>
             <td>${f.lastTs ? formatNYLocal(f.lastTs) : '-'}</td>
             <td>${fmtSize(f.size)}</td>
-            <td class="svg-cell"></td>`;
+            <td class="svg-cell"></td>
+            <td><a class="btn secondary" href="#/chart/${encodeURIComponent(ym)}/${encodeURIComponent(f.name)}">chart</a></td>`;
         const cell = tr.querySelector('.svg-cell');
         cell.appendChild(renderCandlesSvg(f.candles, f.timeframe, { width: 240, height: 36 }));
         tbody.appendChild(tr);

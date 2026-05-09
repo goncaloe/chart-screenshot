@@ -24,7 +24,6 @@ export async function render({ ym, name }, root) {
             <a href="#/folder/${escapeHtml(ym)}">${escapeHtml(ym)}</a> /
             <a href="#/file/${escapeHtml(ym)}/${escapeHtml(name)}">${escapeHtml(name)}</a> / Chart
         </div>
-        <h1>${escapeHtml(f.symbol)} <span class="muted">${escapeHtml(f.timeframe)}</span></h1>
         <div id="chart"></div>`;
     const Highcharts = await loadHighcharts();
     const ohlc = f.candles.map(c => [c[0] * 1000, c[1], c[2], c[3], c[4]]);

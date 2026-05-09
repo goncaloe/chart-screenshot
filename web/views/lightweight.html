@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<style>
+html, body {
+    margin: 4px;
+    padding: 0;
+    background: #000;
+    overflow: hidden;
+    font-family: Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+}
+#chart{
+    width: 100vw;
+    height: 100vh;
+}
+a#tv-attr-logo {
+    display: none !important;
+}
+
+
+.tv-lightweight-charts > table > tr:first-child > td:nth-of-type(2) {
+    border: 1px solid #808080;
+}
+.tv-lightweight-charts > table > tr:nth-of-type(2) > td {
+    background: transparent !important;
+}
+.tv-lightweight-charts > table > tr:nth-of-type(3) > td:nth-of-type(2) {
+    border: 1px solid #808080;
+}
+
+</style>
+</head>
+<body>
+<div id="chart"></div>
+<div id="volumeLabel"></div>
+
+<script src="https://unpkg.com/lightweight-charts@5.2.0/dist/lightweight-charts.standalone.production.js"></script>
+<script>
+    const payload = __PAYLOAD__;
+    
+    // Função para formatar volume com notação abreviada
+    function formatVolume(value, decimals = 0) {
+        if (value >= 1e9) return (value / 1e9).toFixed(decimals) + 'B';
+        if (value >= 1e6) return (value / 1e6).toFixed(decimals) + 'M';
+        if (value >= 1e3) return (value / 1e3).toFixed(decimals) + 'K';
+        return value.toString();
+    }
+    
+    // Calcular volume máximo
+    const maxVolume = Math.max(...payload.volume.map(v => v.value));
+    const volumeLabel = formatVolume(maxVolume, 0);
+    const isDaily = (payload.candles[1].time - payload.candles[0].time) >= 86400;
+    
+    const chart = LightweightCharts.createChart(document.getElementById('chart'), {
+        //autoSize: true,
+        width: document.body.clientWidth - 2,
+        height: document.body.clientHeight - 13,
+        layout: {
+            background: { color: '#000000' },
+            textColor: '#cfcfcf',
+            panes: {
+                enableResize: false
+            }
+        },
+        grid: {
+            vertLines: { color: '#222222', style: 1 },
+            horzLines: { color: '#222222', style: 1 },
+        },
+        timeScale: {
+            borderVisible: false,
+            timeVisible: true,
+            secondsVisible: false,
+        },
+        rightPriceScale: {
+            borderVisible: false,
+        },
+    });
+
+    
+    const candleSeries = chart.addSeries(LightweightCharts.CandlestickSeries, {
+        upColor: '#00aa00',
+        downColor: '#d20000',
+        borderVisible: false,
+        wickUpColor: '#ffffff',
+        wickDownColor: '#ffffff',
+        priceLineVisible: false, 
+        lastValueVisible: false
+    });
+    candleSeries.priceScale().applyOptions({
+        scaleMargins: {
+            top: 0.05,
+            bottom: 0.04
+        },
+    });
+
+    const volumeSeries = chart.addSeries(LightweightCharts.HistogramSeries, {
+        priceFormat: { type: 'volume' },
+        priceScaleId: 'volScale',
+        priceLineVisible: false, 
+        lastValueVisible: false,
+    }, 1);
+    volumeSeries.priceScale().applyOptions({
+        scaleMargins: {
+            top: 0.1,
+            bottom: 0
+        },
+    });
+
+    const ema9Series = chart.addSeries(LightweightCharts.LineSeries, { color: '#ffffff', lineWidth: 1.25, lineStyle: 2, priceLineVisible: false, lastValueVisible: false });
+    const ema20Series = chart.addSeries(LightweightCharts.LineSeries, { color: '#3399ff', lineWidth: 1.25, priceLineVisible: false, lastValueVisible: false });
+    const vwapSeries = chart.addSeries(LightweightCharts.LineSeries, { color: '#ffcc00', lineWidth: 1.25, priceLineVisible: false, lastValueVisible: false });
+
+    candleSeries.setData(payload.candles);
+    volumeSeries.setData(payload.volume);
+    ema9Series.setData(payload.ema9);
+    ema20Series.setData(payload.ema20);
+    if(!isDaily){
+        vwapSeries.setData(payload.vwap);
+    }
+    
+    const pane = chart.panes()[1];
+    pane.setHeight(80);
+
+    const totalBars = payload.candles.length;
+    const barsToShow = 200;
+    chart.timeScale().setVisibleLogicalRange({
+        from: Math.floor(totalBars - barsToShow),
+        to: Math.floor(totalBars - 1)
+    });
+
+
+    // Encontrar transições de dia
+    const dayTransitionTimes = [];
+    const dayOpenTimes = [];
+    const dayCloseTimes = [];
+    if(payload.candles.length > 1 && !isDaily){
+        for (let i = 1; i < payload.candles.length; i++) {
+            const prevDate = new Date(payload.candles[i - 1].time * 1000);
+            const currDate = new Date(payload.candles[i].time * 1000);
+            
+            if (prevDate.toDateString() !== currDate.toDateString()) {
+                dayTransitionTimes.push(payload.candles[i].time);
+            }
+            else if (currDate.getHours() === 10 && currDate.getMinutes() === 30) {
+                dayOpenTimes.push(payload.candles[i].time);
+            }
+            else if (currDate.getHours() === 17 && currDate.getMinutes() === 0) {
+                dayCloseTimes.push(payload.candles[i].time);
+            }
+        }
+    }
+
+    function createVerticalLineCanvas(div) {
+        const canvas = document.createElement('canvas');
+        canvas.style.position = 'absolute';
+        canvas.style.top = '0';
+        canvas.style.left = '0';
+        canvas.style.zIndex = '6';
+        canvas.style.pointerEvents = 'none';
+        div.appendChild(canvas);
+        return canvas;
+    }
+
+    let canvas;
+    let ctx;
+    let canvas2;
+    let ctx2;
+
+    let canvasOpen;
+    let ctxOpen;
+    let canvasOpen2;
+    let ctxOpen2;    
+
+    let canvasClose;
+    let ctxClose
+    let ctxClose2;
+    let canvasClose2;
+
+    function resizeCanvas() {
+        if (!canvas) return;
+        canvas.width = canvas.parentElement.clientWidth;
+        canvas.height = canvas.parentElement.clientHeight;
+        canvas2.width = canvas2.parentElement.clientWidth;
+        canvas2.height = canvas2.parentElement.clientHeight;
+
+        canvasOpen.width = canvasOpen.parentElement.clientWidth;
+        canvasOpen.height = canvasOpen.parentElement.clientHeight;
+        canvasOpen2.width = canvasOpen2.parentElement.clientWidth;
+        canvasOpen2.height = canvasOpen2.parentElement.clientHeight;
+
+        canvasClose.width = canvasClose.parentElement.clientWidth;
+        canvasClose.height = canvasClose.parentElement.clientHeight;
+        canvasClose2.width = canvasClose2.parentElement.clientWidth;
+        canvasClose2.height = canvasClose2.parentElement.clientHeight
+
+        drawVerticalLines();
+    }
+    
+    function drawVerticalLines() {
+        if (!canvas) return;
+
+        const timeScale = chart.timeScale();
+        
+        const getLineXBetweenCandles = (time) => {
+            const x = timeScale.timeToCoordinate(time);
+            const candleIndex = payload.candles.findIndex(c => c.time === time);
+            
+            if (candleIndex > 0) {
+                const prevTime = payload.candles[candleIndex - 1].time;
+                const prevX = timeScale.timeToCoordinate(prevTime);
+                const diff = prevX - x;
+                return (prevX + x + 1.7) / 2;
+            }
+            return x;
+        };
+        
+        const drawLine = (time, color, ct1, ct2, cv1, cv2) => {
+            const x = getLineXBetweenCandles(time);
+            ct1.strokeStyle = color;
+            ct1.lineWidth = 1;
+            ct1.setLineDash([6, 3]);
+            ct1.beginPath();
+            ct1.moveTo(Math.round(x) - 0.5, 0);
+            ct1.lineTo(Math.round(x) - 0.5, cv1.height);
+            ct1.stroke();
+            ct2.strokeStyle = color;
+            ct2.lineWidth = 1;
+            ct2.setLineDash([6, 3]);
+            ct2.beginPath();
+            ct2.moveTo(Math.round(x) - 0.5, 0);
+            ct2.lineTo(Math.round(x) - 0.5, cv2.height);
+            ct2.stroke();
+        };
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.imageSmoothingEnabled = false;
+        ctx2.clearRect(0, 0, canvas2.width, canvas2.height);
+        ctx2.imageSmoothingEnabled = false;
+        dayTransitionTimes.forEach(time => {
+            drawLine(time, '#7F7F7F', ctx, ctx2, canvas, canvas2);
+        });
+
+        ctxOpen.clearRect(0, 0, canvasOpen.width, canvasOpen.height);
+        ctxOpen.imageSmoothingEnabled = false;
+        ctxOpen2.clearRect(0, 0, canvasOpen2.width, canvasOpen2.height);
+        ctxOpen2.imageSmoothingEnabled = false;
+        dayOpenTimes.forEach(time => {
+            drawLine(time, '#DDB800', ctxOpen, ctxOpen2, canvasOpen, canvasOpen2);
+        });
+
+        ctxClose.clearRect(0, 0, canvasClose.width, canvasClose.height);
+        ctxClose.imageSmoothingEnabled = false;
+        ctxClose2.clearRect(0, 0, canvasClose2.width, canvasClose2.height);
+        ctxClose2.imageSmoothingEnabled = false;
+        dayCloseTimes.forEach(time => {
+            drawLine(time, '#0026FF', ctxClose, ctxClose2, canvasClose, canvasClose2);
+        });
+    }
+
+    chart.timeScale().subscribeVisibleLogicalRangeChange(() => {
+        drawVerticalLines();
+    });
+
+
+    // para fixar o espaçamento entre as barras
+    //chart.timeScale().applyOptions({
+    //    barSpacing: 10,
+    //    minBarSpacing: 10,
+    //    maxBarSpacing: 10,
+    //});
+
+    window.addEventListener('resize', () => {
+        chart.applyOptions({
+            width: window.innerWidth,
+            height: window.innerHeight
+        });
+        if(canvas){
+            resizeCanvas();
+        }
+        
+    });
+
+    requestAnimationFrame(() => {
+        const tr = document.querySelector('.tv-lightweight-charts > table > tr:nth-of-type(2) > td[colspan="3"]').parentElement;
+        tr.setAttribute("style", "height: 5px !important;");
+        
+        const divCanvas = document.querySelector('.tv-lightweight-charts > table > tr:first-child > td:nth-of-type(2) > div');
+        const chartCanvas = divCanvas.querySelector('canvas:nth-of-type(1)');
+
+        const divVolume = document.querySelector('.tv-lightweight-charts > table > tr:nth-of-type(3) > td:nth-of-type(2) > div');
+        const volumeCanvas = divVolume.querySelector('canvas:nth-of-type(1)');
+    
+        canvas = createVerticalLineCanvas(divCanvas);
+        ctx = canvas.getContext('2d');
+        canvas2 = createVerticalLineCanvas(divVolume);
+        ctx2 = canvas2.getContext('2d');
+
+        canvasOpen = createVerticalLineCanvas(divCanvas);
+        ctxOpen = canvasOpen.getContext('2d');
+        canvasOpen2 = createVerticalLineCanvas(divVolume);
+        ctxOpen2 = canvasOpen2.getContext('2d');
+
+        canvasClose = createVerticalLineCanvas(divCanvas);
+        ctxClose = canvasClose.getContext('2d');
+        canvasClose2 = createVerticalLineCanvas(divVolume);
+        ctxClose2 = canvasClose2.getContext('2d');
+
+        resizeCanvas();
+
+        // usar chart.timeScale().subscribeVisibleLogicalRangeChange
+        const divVolRgt = document.querySelector('.tv-lightweight-charts > table > tr:nth-of-type(3) > td:nth-of-type(3) > div');
+        divVolRgt.insertAdjacentHTML('beforeend', '<span style="position: absolute; left: 8px; top: 2px; background: rgba(0, 0, 0, 0.7); color: #cfcfcf; font-size: 12px; font-family: monospace; z-index: 100;">' + volumeLabel + '</span>');
+        
+        if(payload.symbol) {
+            let sLabel = payload.symbol;
+            if(payload.timeframe) sLabel += ' | ' + payload.timeframe;
+            divCanvas.insertAdjacentHTML('beforeend', '<span style="position: absolute; left: 5px; top: 2px; color: #fff; font-size: 12px; font-family: Arial; font-weight: bold; z-index: 100;">' + sLabel + '</span>');
+        }
+
+    });    
+
+
+
+</script>
+
+</body>
+</html>
