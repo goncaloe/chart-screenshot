@@ -5,6 +5,7 @@ node_modules/
 .DS_Store
 .history
 .claude
+.devcontainer
 
 # windows thumbnail cache
 Thumbs.db

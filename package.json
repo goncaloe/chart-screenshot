@@ -4,10 +4,12 @@
     "start": "node web/server.js"
   },
   "dependencies": {
-    "ib-tws-api": "file:../ib-tws-api",
+    "ib-tws-api": "file:/workspaces/ib-tws-api",
     "express": "^5.1.0",
     "highcharts": "^12.6.0",
     "minimist": "^1.2.8",
     "playwright": "^1.59.1"
   }
 }
+
+
