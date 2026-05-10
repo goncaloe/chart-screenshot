@@ -16,7 +16,7 @@ function chartPage(f) {
         body,
         scripts: [
             '/vendor/highcharts/highstock.js',
-            { src: '/assets/chart-client.js', type: 'module' }
+            { src: '/assets/stockchart.js', type: 'module' }
         ]
     });
 }
