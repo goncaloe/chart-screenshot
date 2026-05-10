@@ -1,12 +1,11 @@
 const store = require('../../core/store');
 
-function listFolders(req, res) {
-    res.json({ folders: store.listFolders() });
+function getFolders() {
+    return { folders: store.listFolders() };
 }
 
-function listFiles(req, res) {
-    const ym = req.params.ym;
-    if (!/^\d{4}-\d{2}$/.test(ym)) return res.status(400).json({ error: 'Invalid ym' });
+function getFiles(ym) {
+    if (!/^\d{4}-\d{2}$/.test(ym)) throw new Error('Invalid ym');
     const files = store.listFiles(ym).map(f => ({
         name: f.name,
         symbol: f.symbol,
@@ -17,7 +16,7 @@ function listFiles(req, res) {
         lastTs: f.lastTs,
         candles: f.candles
     }));
-    res.json({ ym, files });
+    return { ym, files };
 }
 
-module.exports = { listFolders, listFiles };
+module.exports = { getFolders, getFiles };

@@ -1,19 +1,64 @@
 const path = require('path');
 const express = require('express');
-const folders = require('./actions/folders');
-const file = require('./actions/file');
+
+const foldersAction = require('./actions/folders');
+const fileAction = require('./actions/file');
 const importAction = require('./actions/import');
+
+const { foldersPage } = require('./pages/folders');
+const { filesPage } = require('./pages/files');
+const { filePage } = require('./pages/file');
+const { chartPage } = require('./pages/chart');
+const { importPage } = require('./pages/import');
+const { lightweightPage } = require('./pages/lightweight');
 
 const app = express();
 app.use(express.json({ limit: '2mb' }));
 
-app.get('/api/folders', folders.listFolders);
-app.get('/api/folders/:ym', folders.listFiles);
-app.get('/api/file/:ym/:name', file.getFile);
+app.get('/', (req, res) => {
+    res.send(foldersPage(foldersAction.getFolders()));
+});
+
+app.get('/folder/:ym', (req, res) => {
+    try {
+        res.send(filesPage(foldersAction.getFiles(req.params.ym)));
+    } catch (e) {
+        res.status(400).send(`<pre>${e.message}</pre>`);
+    }
+});
+
+app.get('/file/:ym/:name', (req, res) => {
+    try {
+        res.send(filePage(fileAction.getFile(req.params.ym, req.params.name)));
+    } catch (e) {
+        res.status(404).send(`<pre>${e.message}</pre>`);
+    }
+});
+
+app.get('/chart/:ym/:name', (req, res) => {
+    try {
+        res.send(chartPage(fileAction.getFile(req.params.ym, req.params.name)));
+    } catch (e) {
+        res.status(404).send(`<pre>${e.message}</pre>`);
+    }
+});
+
+app.get('/import', (req, res) => {
+    res.send(importPage(req.query));
+});
+
+app.get('/lightweight/:ym/:name', (req, res) => {
+    try {
+        res.send(lightweightPage(req.params.ym, req.params.name));
+    } catch (e) {
+        res.status(404).send(`<pre>${e.message}</pre>`);
+    }
+});
+
 app.post('/api/import', importAction.postImport);
 
 app.use('/vendor/highcharts', express.static(path.join(__dirname, '..', 'node_modules', 'highcharts')));
-app.use(express.static(path.join(__dirname, 'views')));
+app.use('/assets', express.static(path.join(__dirname, 'public')));
 
-const PORT = process.env.PORT || 3003;
+const PORT = process.env.PORT || 3005;
 app.listen(PORT, '127.0.0.1', () => console.log(`http://localhost:${PORT}`));

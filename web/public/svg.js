@@ -23,7 +23,7 @@ function buildSlots(candles, tf) {
     return slots;
 }
 
-export function renderCandlesSvg(candles, tf, { width = 240, height = 36 } = {}) {
+export function renderCandlesSvg(candles, tf, { width = 240, height = 30 } = {}) {
     const ns = 'http://www.w3.org/2000/svg';
     const svg = document.createElementNS(ns, 'svg');
     svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
@@ -60,7 +60,7 @@ export function renderCandlesSvg(candles, tf, { width = 240, height = 36 } = {})
         rect.setAttribute('y', 0);
         rect.setAttribute('width', w);
         rect.setAttribute('height', height);
-        rect.setAttribute('fill', present ? '#2563eb' : '#cbd5e1');
+        rect.setAttribute('fill', present ? '#5e8cee' : '#cbd5e1');
         const title = document.createElementNS(ns, 'title');
         title.textContent = `${present ? 'data' : 'gap'}: ${formatNYLocal(slots[i].ts)} → ${formatNYLocal(slots[j - 1].ts)} (${j - i})`;
         rect.appendChild(title);
