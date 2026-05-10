@@ -21,7 +21,8 @@ app.get('/', (req, res) => {
 
 app.get('/folder/:ym', (req, res) => {
     try {
-        res.send(filesPage(foldersAction.getFiles(req.params.ym)));
+        const day = req.query.day ? Number(req.query.day) : null;
+        res.send(filesPage(foldersAction.getFiles(req.params.ym, day)));
     } catch (e) {
         res.status(400).send(`<pre>${e.message}</pre>`);
     }
