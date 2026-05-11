@@ -72,22 +72,24 @@ module.exports = function buildPayload(file){
     if(fs.existsSync(filepath) === false){
         throw new Error('File not found: ' + filepath);
     }
-    const raw = JSON.parse(fs.readFileSync(filepath));
-    
+    filename = path.basename(filepath);
+    const m = filename.match(/^([A-Z]{1,5})_(1m|5m|1d)\.json$/);
+    if (!m) {
+        throw new Error('Invalid file format: ' + filename);
+    }
+
+    const raw = JSON.parse(fs.readFileSync(filepath));    
     const candles = normalizeCandles(raw);
 
-    let payload = {
+    return {
         candles,
         volume: buildVolumeSeries(candles),
         ema9: calculateEMA(candles, 9),
         ema20: calculateEMA(candles, 20),
         vwap: calculateVWAP(candles),
-    };
-
-    const m = file.match(/^([A-Z]{1,5})_(1m|5m|1d)_\d{4}_\d{2}\.json$/);
-    if (m) {
-        payload.symbol = m[1];
-        payload.timeframe = m[2];
-    }
-    return payload;   
+        symbol: m[1],
+        timeframe: m[2],
+        folder: path.dirname(file),
+        filename: filename,
+    }; 
 }

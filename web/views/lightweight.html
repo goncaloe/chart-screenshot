@@ -324,6 +324,24 @@ a#tv-attr-logo {
 
     });    
 
+    window.onkeydown = function(e){
+        if(e.altKey && e.keyCode == 83){
+            e.preventDefault();
+            const range = chart.timeScale().getVisibleRange();
+            const day = new Date(range.to * 1000).getDay();
+
+            const info = {
+                day: day,
+                filename: payload.filename,
+                folder: payload.folder,
+                datestart: range.from,
+                dateend: range.to
+            };
+
+            // todo: guardar range do grafico
+            console.log('Salvar range: ', info);
+        }
+    }
 
 
 </script>
