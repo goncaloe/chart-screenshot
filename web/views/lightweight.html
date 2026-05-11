@@ -338,8 +338,19 @@ a#tv-attr-logo {
                 dateend: range.to
             };
 
-            // todo: guardar range do grafico
-            console.log('Salvar range: ', info);
+            fetch('/api/range', {
+                method: 'POST',
+                headers: { 'content-type': 'application/json' },
+                body: JSON.stringify({
+                    filename: info.filename,
+                    datestart: info.datestart,
+                    dateend: info.dateend
+                })
+            }).then(async r => {
+                const body = await r.json().catch(() => ({}));
+                if (!r.ok) console.error('Erro ao guardar range:', body.error || r.statusText);
+                else console.log('Range guardado:', body.path);
+            }).catch(err => console.error('Erro ao guardar range:', err));
         }
     }
 

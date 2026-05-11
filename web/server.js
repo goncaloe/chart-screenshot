@@ -4,6 +4,7 @@ const express = require('express');
 const foldersAction = require('./actions/folders');
 const fileAction = require('./actions/file');
 const importAction = require('./actions/import');
+const rangeAction = require('./actions/range');
 
 const { foldersPage } = require('./pages/folders');
 const { filesPage } = require('./pages/files');
@@ -57,6 +58,7 @@ app.get('/lightweight/:ym/:name', (req, res) => {
 });
 
 app.post('/api/import', importAction.postImport);
+app.post('/api/range', rangeAction.postRange);
 
 app.use('/vendor/highcharts', express.static(path.join(__dirname, '..', 'node_modules', 'highcharts')));
 app.use('/assets', express.static(path.join(__dirname, 'public')));
