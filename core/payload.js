@@ -51,7 +51,8 @@ function calculateVWAP(data) {
             currentDay = nyDay;
             continue;
         }
-        cumulativePV += c.close * c.volume;
+
+        cumulativePV += c.volume * (c.high + c.low + c.close) / 3;
         cumulativeVolume += c.volume;
         
         if(cumulativePV < 0.001){
