@@ -16,7 +16,7 @@ function postRange(req, res) {
         const dd = pad(d.getUTCDate());
         const dir = path.join(DATA_DIR, ym);
         fs.mkdirSync(dir, { recursive: true });
-        const filePath = path.join(dir, `ranges-${dd}.json`);
+        const filePath = path.join(dir, `stockinfo-${dd}.json`);
 
         let ranges = [];
         if (fs.existsSync(filePath)) {
@@ -25,7 +25,7 @@ function postRange(req, res) {
             if (!Array.isArray(ranges)) throw new Error(`Invalid file shape: ${filePath}`);
         }
 
-        const entry = { filename, datestart, dateend };
+        const entry = { filename, rangestart: datestart, rangeend: dateend };
         const idx = ranges.findIndex(r => r.filename === filename);
         if (idx >= 0) ranges[idx] = entry;
         else ranges.push(entry);

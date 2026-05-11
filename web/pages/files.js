@@ -7,10 +7,17 @@ function fmtSize(n) {
 }
 
 function filesPage({ ym, files, day, timeframe }) {
+    const showStockinfos = !!day;
     const rows = files.map(f => {
         const link = `/file/${encodeURIComponent(ym)}/${encodeURIComponent(f.name)}`;
         const chartHref = `/chart/${encodeURIComponent(ym)}/${encodeURIComponent(f.name)}`;
         const lightweightHref = `/lightweight/${encodeURIComponent(ym)}/${encodeURIComponent(f.name)}`;
+        const rangeCell = showStockinfos
+            ? `<td style="text-align: center;"><input type="checkbox" disabled${f.hasRange ? ' checked' : ''}></td>`
+            : '';
+        const metaCell = showStockinfos
+            ? `<td style="text-align: center;"><input type="checkbox" disabled${f.hasMeta ? ' checked' : ''}><a href="#">↓</a></td>`
+            : '';
         return `<tr>
             <td><a href="${link}">${escapeHtml(f.symbol)}</a></td>
             <td>${escapeHtml(f.timeframe)}</td>
@@ -19,6 +26,8 @@ function filesPage({ ym, files, day, timeframe }) {
             <td data-fmt-ts="${f.lastTs ?? ''}">${f.lastTs ?? '-'}</td>
             <td>${fmtSize(f.size)}</td>
             <td class="svg-cell" data-tf="${escapeHtml(f.timeframe)}" data-candles='${attr(f.candles)}'></td>
+            ${rangeCell}
+            ${metaCell}
             <td style="text-align: right;"><a href="${chartHref}">chart</a> | <a href="${lightweightHref}">lightweight</a></td>
         </tr>`;
     }).join('');
@@ -51,7 +60,11 @@ function filesPage({ ym, files, day, timeframe }) {
             <thead><tr>
                 <th>Symbol</th><th>TF</th><th>Count</th>
                 <th>First (NY)</th><th>Last (NY)</th>
-                <th>Size</th><th>Candles</th><th></th>
+                <th>Size</th>
+                <th style="text-align: center;">Candles</th>
+                ${showStockinfos ? '<th>Range</th>' : ''}
+                ${showStockinfos ? '<th>Meta</th>' : ''}
+                <th></th>
             </tr></thead>
             <tbody>${rows}</tbody>
         </table>` : `<p class="muted">No files in this folder.</p>`}`;
