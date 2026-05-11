@@ -14,3 +14,33 @@ for (const el of document.querySelectorAll('[data-fmt-ts]')) {
     const ts = +el.dataset.fmtTs;
     if (Number.isFinite(ts) && ts > 0) el.textContent = formatNYLocal(ts);
 }
+
+for (const link of document.querySelectorAll('a.fetch-meta')) {
+    link.addEventListener('click', async (e) => {
+        e.preventDefault();
+        if (link.dataset.busy === '1') return;
+        link.dataset.busy = '1';
+        const original = link.textContent;
+        link.textContent = '…';
+        try {
+            const r = await fetch('/api/stockinfo', {
+                method: 'POST',
+                headers: { 'content-type': 'application/json' },
+                body: JSON.stringify({
+                    ym: link.dataset.ym,
+                    day: Number(link.dataset.day),
+                    filename: link.dataset.filename
+                })
+            });
+            const body = await r.json().catch(() => ({}));
+            if (!r.ok) throw new Error(body.error || r.statusText);
+            const cb = link.parentElement.querySelector('input[type="checkbox"]');
+            if (cb) cb.checked = true;
+        } catch (err) {
+            alert('Erro ao buscar meta: ' + err.message);
+        } finally {
+            link.textContent = original;
+            delete link.dataset.busy;
+        }
+    });
+}

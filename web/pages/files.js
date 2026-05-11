@@ -16,7 +16,7 @@ function filesPage({ ym, files, day, timeframe }) {
             ? `<td style="text-align: center;"><input type="checkbox" disabled${f.hasRange ? ' checked' : ''}></td>`
             : '';
         const metaCell = showStockinfos
-            ? `<td style="text-align: center;"><input type="checkbox" disabled${f.hasMeta ? ' checked' : ''}><a href="#">↓</a></td>`
+            ? `<td style="text-align: center;"><input type="checkbox" disabled${f.hasMeta ? ' checked' : ''}><a href="#" class="fetch-meta" data-ym="${escapeHtml(ym)}" data-day="${day}" data-filename="${escapeHtml(f.name)}">↓</a></td>`
             : '';
         return `<tr>
             <td><a href="${link}">${escapeHtml(f.symbol)}</a></td>
