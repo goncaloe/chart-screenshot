@@ -6,7 +6,7 @@ function fmtSize(n) {
     return (n / 1024 / 1024).toFixed(2) + ' MB';
 }
 
-function filesPage({ ym, files, day }) {
+function filesPage({ ym, files, day, timeframe }) {
     const rows = files.map(f => {
         const link = `/file/${encodeURIComponent(ym)}/${encodeURIComponent(f.name)}`;
         const chartHref = `/chart/${encodeURIComponent(ym)}/${encodeURIComponent(f.name)}`;
@@ -30,12 +30,19 @@ function filesPage({ ym, files, day }) {
         }))
         .join('');
 
+    const tfOptions = ['<option value="">All TFs</option>']
+        .concat(['1m', '5m', '1d'].map(tf =>
+            `<option value="${tf}"${tf === timeframe ? ' selected' : ''}>${tf}</option>`
+        ))
+        .join('');
+
     const body = `
         <div class="crumbs"><a href="/">Folders</a> / ${escapeHtml(ym)}</div>
         <h1>${escapeHtml(ym)}</h1>
         <div class="actions">
             <form class="filter" method="get" action="/folder/${encodeURIComponent(ym)}">
                 <select name="day">${dayOptions}</select>
+                <select name="timeframe">${tfOptions}</select>
                 <button class="btn secondary" type="submit">Filtrar</button>
             </form>
             <a class="btn push-right" href="/import?ym=${encodeURIComponent(ym)}">Import</a>
