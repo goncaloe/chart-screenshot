@@ -1,10 +1,37 @@
 const { layout, escapeHtml } = require('../layout');
+const store = require('../../core/store');
+const market = require('../../core/market');
+
+function tsToInputValue(unixSec) {
+    return market.formatNYLocal(unixSec * 1000).replace(' ', 'T');
+}
+
+function defaultFromTo() {
+    const todayNY = market.formatNYLocal(Date.now()).slice(0, 10);
+    return { from: `${todayNY}T04:00`, to: `${todayNY}T20:00` };
+}
 
 function importPage(query = {}) {
     const symbol = query.symbol || '';
     const timeframe = query.timeframe || '5m';
-    const from = query.from || '';
-    const to = query.to || '';
+    let from = query.from || '';
+    let to = query.to || '';
+
+    if (!from && !to && query.ym && symbol && timeframe) {
+        try {
+            const f = store.loadFile(query.ym, store.fileName(symbol, timeframe));
+            if (f.candles.length) {
+                from = tsToInputValue(f.candles[0][0]);
+                to = tsToInputValue(f.candles[f.candles.length - 1][0]);
+            }
+        } catch {}
+    }
+
+    if (!from || !to) {
+        const def = defaultFromTo();
+        if (!from) from = def.from;
+        if (!to) to = def.to;
+    }
     const tfOpts = ['1m', '5m', '1d']
         .map(t => `<option value="${t}"${t === timeframe ? ' selected' : ''}>${t}</option>`)
         .join('');
