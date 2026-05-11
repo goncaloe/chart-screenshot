@@ -28,7 +28,7 @@ form.import label { align-self: center; font-weight: 600; }
 form.import input, form.import select { padding: 0.4rem; font: inherit; }
 form.import .full { grid-column: 1 / -1; }
 .muted { color: #6b7280; }
-.svg-cell { padding: 0; }
+.svg-cell { padding: 0; min-width: 200px; }
 .svg-cell svg { display: block; }
 .svg-full { width: 100%; height: 140px; background: #fff; border: 1px solid #e5e7eb; }
 .error { color: #b91c1c; background: #fef2f2; padding: 0.5rem 0.75rem; border-radius: 4px; }
