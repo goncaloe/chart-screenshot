@@ -80,6 +80,7 @@ module.exports = async function dilutionFetch(symbol) {
         });
 
         console.log('\nDilutionTracker login required.');
+        
         await waitForEnter('After login press ENTER here to continue.');
 
         logged = await tryLoadTicker();
@@ -104,7 +105,7 @@ module.exports = async function dilutionFetch(symbol) {
 
     let m;
     m = bodyText.match(/Float\s*&\s*OS:\s*(\d+(?:\.\d+)?)M\s*\/?/i);
-    const cfloat = m ? advancedRound(m[1].trim()) : null;
+    const shs_float = m ? advancedRound(m[1].trim()) : null;
     m = bodyText.match(/Inst\s*Own:\s*([\d.-]+)%/i);
     const inst_own = m ? advancedRound(m[1].trim()) : null;
     m = bodyText.match(/Net\s*Cash\/Sh[:\s]*([-\d.]+)/i);
@@ -127,13 +128,20 @@ module.exports = async function dilutionFetch(symbol) {
         }
     }
 
-    const result = {
-        cfloat,
+    const cleanObj = function(obj) {
+        for (var propName in obj) {
+            if (obj[propName] === null || obj[propName] === undefined) {
+            delete obj[propName];
+            }
+        }
+        return obj;
+    }
+    
+    return cleanObj({
+        shs_float,
         inst_own,
         cps,
         cash,
         country,
-    };
-    
-    return result;
+    });
 }

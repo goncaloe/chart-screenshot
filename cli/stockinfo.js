@@ -4,8 +4,8 @@ const minimist = require('minimist');
 
 function dataToText(data){
     let text = [];
-    if (data.cfloat) {
-        text.push("Float: " + data.cfloat + "M");
+    if (data.shs_float) {
+        text.push("Float: " + data.shs_float + "M");
     }
     if (data.inst_own) {
         text.push("Inst Own: " + data.inst_own + "%");

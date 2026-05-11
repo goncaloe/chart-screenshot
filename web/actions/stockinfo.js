@@ -29,7 +29,7 @@ async function postFetchMeta(req, res) {
         }
 
         const idx = list.findIndex(r => r && r.filename === filename);
-        if (idx >= 0) list[idx] = { ...list[idx], ...info };
+        if (idx >= 0) list[idx] = { ...info, ...list[idx] };
         else list.push({ filename, ...info });
 
         const tmp = filePath + '.tmp';

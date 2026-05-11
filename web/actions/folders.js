@@ -11,11 +11,10 @@ function readStockinfos(ym, day) {
     if (!txt.trim()) return new Map();
     const list = JSON.parse(txt);
     if (!Array.isArray(list)) return new Map();
-
     return new Map(list.map(r => {
         return [r.filename, {
             hasRange: (r.hasOwnProperty('rangestart')),
-            hasMeta: (r.hasOwnProperty('float') || r.hasOwnProperty('cps') || r.hasOwnProperty('cash'))
+            hasMeta: (r.hasOwnProperty('shs_float') || r.hasOwnProperty('cps') || r.hasOwnProperty('cash'))
         }]
     }));
 }
