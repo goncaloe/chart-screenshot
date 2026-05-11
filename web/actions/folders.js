@@ -5,7 +5,7 @@ const { nyDateKey } = require('../../core/market');
 
 function readStockinfos(ym, day) {
     const dd = String(day).padStart(2, '0');
-    const abs = path.join(store.DATA_DIR, ym, `stockinfo-${dd}.json`);
+    const abs = path.join(store.DATA_DIR, ym, `stockinfo-${dd}.json`);  
     if (!fs.existsSync(abs)) return new Map();
     const txt = fs.readFileSync(abs, 'utf8');
     if (!txt.trim()) return new Map();
@@ -13,7 +13,9 @@ function readStockinfos(ym, day) {
     if (!Array.isArray(list)) return new Map();
     return new Map(list.map(r => {
         return [r.filename, {
-            hasRange: (r.hasOwnProperty('rangestart')),
+            hasRange1m: (r.hasOwnProperty('rangestart_1m')),
+            hasRange5m: (r.hasOwnProperty('rangestart_5m')),
+            hasRange1d: (r.hasOwnProperty('rangestart_1d')),
             hasMeta: (r.hasOwnProperty('shs_float') || r.hasOwnProperty('cps') || r.hasOwnProperty('cash'))
         }]
     }));
@@ -41,7 +43,7 @@ function getFiles(ym, day, timeframe) {
             firstTs: f.firstTs,
             lastTs: f.lastTs,
             candles: f.candles,
-            hasRange: stockinfo?.get(f.name)?.hasRange || false,
+            hasRange: stockinfo?.get(f.name)?.['hasRange' + f.timeframe] || false,
             hasMeta: stockinfo?.get(f.name)?.hasMeta || false
         }));
     return { ym, files, day: selectedDay, timeframe: selectedTf };

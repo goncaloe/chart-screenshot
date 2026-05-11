@@ -7,9 +7,9 @@ function pad(n) { return String(n).padStart(2, '0'); }
 
 function postRange(req, res) {
     try {
-        const { filename, datestart, dateend } = req.body || {};
-        if (!filename || typeof datestart !== 'number' || typeof dateend !== 'number') {
-            return res.status(400).json({ error: 'filename, datestart, dateend required' });
+        const { filename, timeframe, datestart, dateend } = req.body || {};
+        if (!filename || !timeframe || typeof datestart !== 'number' || typeof dateend !== 'number') {
+            return res.status(400).json({ error: 'filename, timeframe, datestart, dateend required' });
         }
         const d = new Date(dateend * 1000);
         const ym = `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}`;
@@ -25,7 +25,10 @@ function postRange(req, res) {
             if (!Array.isArray(ranges)) throw new Error(`Invalid file shape: ${filePath}`);
         }
 
-        const entry = { filename, rangestart: datestart, rangeend: dateend };
+        const entry = { filename };
+        entry[`rangestart_${timeframe}`] = datestart;
+        entry[`rangeend_${timeframe}`] = dateend;
+
         const idx = ranges.findIndex(r => r.filename === filename);
         if (idx >= 0) ranges[idx] = entry;
         else ranges.push(entry);

@@ -13,7 +13,7 @@ function buildVolumeSeries(candles) {
 function normalizeCandles(raw) {
     const offset = utcNyOffset() / 1000;
     return raw.map(c => ({
-        time: c[0] + offset,
+        time: c[0] + offset, // lightweight does not have a timezone setting, we need to convert it to NY time
         open: c[1],
         high: c[2],
         low: c[3],
@@ -81,15 +81,21 @@ module.exports = function buildPayload(file){
     const raw = JSON.parse(fs.readFileSync(filepath));    
     const candles = normalizeCandles(raw);
 
-    return {
+    let result = {
         candles,
         volume: buildVolumeSeries(candles),
         ema9: calculateEMA(candles, 9),
         ema20: calculateEMA(candles, 20),
-        vwap: calculateVWAP(candles),
         symbol: m[1],
         timeframe: m[2],
         folder: path.dirname(file),
         filename: filename,
-    }; 
+    };
+
+    if(m[2] === '1m' || m[2] === '5m'){
+        result.vwap = calculateVWAP(candles);
+        result.ema80 = calculateEMA(candles, 80);
+    }
+
+    return result;
 }

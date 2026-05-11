@@ -62,8 +62,8 @@ function filesPage({ ym, files, day, timeframe }) {
                 <th>First (NY)</th><th>Last (NY)</th>
                 <th>Size</th>
                 <th style="text-align: center;">Candles</th>
-                ${showStockinfos ? '<th>Range</th>' : ''}
-                ${showStockinfos ? '<th>Meta</th>' : ''}
+                ${showStockinfos ? '<th style="text-align: center;">Range</th>' : ''}
+                ${showStockinfos ? '<th style="text-align: center;">Meta</th>' : ''}
                 <th></th>
             </tr></thead>
             <tbody>${rows}</tbody>

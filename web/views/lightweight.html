@@ -111,15 +111,19 @@ a#tv-attr-logo {
         },
     });
 
-    const ema9Series = chart.addSeries(LightweightCharts.LineSeries, { color: '#ffffff', lineWidth: 1.25, lineStyle: 2, priceLineVisible: false, lastValueVisible: false });
-    const ema20Series = chart.addSeries(LightweightCharts.LineSeries, { color: '#3399ff', lineWidth: 1.25, priceLineVisible: false, lastValueVisible: false });
-    const vwapSeries = chart.addSeries(LightweightCharts.LineSeries, { color: '#ffcc00', lineWidth: 1.25, priceLineVisible: false, lastValueVisible: false });
-
     candleSeries.setData(payload.candles);
     volumeSeries.setData(payload.volume);
+
+    const ema9Series = chart.addSeries(LightweightCharts.LineSeries, { color: '#ffffff', lineWidth: 1.25, lineStyle: 2, priceLineVisible: false, lastValueVisible: false });
     ema9Series.setData(payload.ema9);
+    const ema20Series = chart.addSeries(LightweightCharts.LineSeries, { color: '#3399ff', lineWidth: 1.25, priceLineVisible: false, lastValueVisible: false });
     ema20Series.setData(payload.ema20);
-    if(!isDaily){
+    if(payload.ema80){
+        const ema80Series = chart.addSeries(LightweightCharts.LineSeries, { color: '#980098', lineWidth: 1.25, priceLineVisible: false, lastValueVisible: false });
+        ema80Series.setData(payload.ema80);
+    }
+    if(payload.vwap){
+        const vwapSeries = chart.addSeries(LightweightCharts.LineSeries, { color: '#ffcc00', lineWidth: 1.25, priceLineVisible: false, lastValueVisible: false });
         vwapSeries.setData(payload.vwap);
     }
     
@@ -282,7 +286,6 @@ a#tv-attr-logo {
         if(canvas){
             resizeCanvas();
         }
-        
     });
 
     requestAnimationFrame(() => {
@@ -321,30 +324,20 @@ a#tv-attr-logo {
             if(payload.timeframe) sLabel += ' | ' + payload.timeframe;
             divCanvas.insertAdjacentHTML('beforeend', '<span style="position: absolute; left: 5px; top: 2px; color: #fff; font-size: 12px; font-family: Arial; font-weight: bold; z-index: 100;">' + sLabel + '</span>');
         }
-
-    });    
+    });
 
     window.onkeydown = function(e){
         if(e.altKey && e.keyCode == 83){
             e.preventDefault();
             const range = chart.timeScale().getVisibleRange();
-            const day = new Date(range.to * 1000).getDay();
-
-            const info = {
-                day: day,
-                filename: payload.filename,
-                folder: payload.folder,
-                datestart: range.from,
-                dateend: range.to
-            };
-
             fetch('/api/range', {
                 method: 'POST',
                 headers: { 'content-type': 'application/json' },
                 body: JSON.stringify({
-                    filename: info.filename,
-                    datestart: info.datestart,
-                    dateend: info.dateend
+                    filename: payload.filename,
+                    timeframe: payload.timeframe,
+                    datestart: range.from,
+                    dateend: range.to
                 })
             }).then(async r => {
                 const body = await r.json().catch(() => ({}));
