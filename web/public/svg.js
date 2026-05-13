@@ -70,6 +70,26 @@ export function renderCandlesSvg(candles, tf, { height = 30 } = {}) {
         i = j;
     }
 
+    if (tf !== '1d' && n > 1) {
+        let prevDay = formatNYLocal(slots[0].ts).slice(0, 10);
+        for (let k = 1; k < n; k++) {
+            const currDay = formatNYLocal(slots[k].ts).slice(0, 10);
+            if (currDay !== prevDay) {
+                const x = k * slotW;
+                const line = document.createElementNS(ns, 'line');
+                line.setAttribute('x1', x);
+                line.setAttribute('x2', x);
+                line.setAttribute('y1', 0);
+                line.setAttribute('y2', height);
+                line.setAttribute('stroke', '#bfdbfe');
+                line.setAttribute('stroke-width', '0.5');
+                line.setAttribute('vector-effect', 'non-scaling-stroke');
+                svg.appendChild(line);
+            }
+            prevDay = currDay;
+        }
+    }
+
     const closeBy = new Map(candles.map(c => [c[0], c[4]]));
     let pMin = Infinity, pMax = -Infinity;
     for (const c of candles) {
