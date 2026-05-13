@@ -2,6 +2,16 @@ const ib = require('./ib');
 const market = require('./market');
 const store = require('./store');
 
+function marketHourSeconds(fromMs, toMs) {
+    const fromSec = Math.floor(fromMs / 60000) * 60;
+    const toSec = Math.ceil(toMs / 60000) * 60;
+    let count = 0;
+    for (let s = fromSec; s < toSec; s += 60) {
+        if (market.isMarketOpen(s)) count += 60;
+    }
+    return count;
+}
+
 function dailyTsToUnixSec(yyyymmdd) {
     const m = String(yyyymmdd).match(/^(\d{4})(\d{2})(\d{2})$/);
     if (!m) throw new Error(`Bad daily date: ${yyyymmdd}`);
@@ -55,21 +65,22 @@ async function importRange({ symbol, timeframe, fromMs, toMs }) {
         });
         buffer.push(...normalizeBars(raw.bars || [], tf));
     } else {
-        const totalSec = Math.ceil((toMs - fromMs) / 1000);
+        const totalSec = marketHourSeconds(fromMs, toMs);
         const max = meta.maxChunk;
-        let remaining = totalSec;
         let cursorMs = toMs;
-        while (remaining > 0) {
-            const chunk = Math.min(remaining, max);
-            const bars = await fetchChunk({
-                contract,
-                endMs: cursorMs,
-                durationSec: chunk,
-                tf
-            });
-            buffer.push(...bars);
-            cursorMs -= chunk * 1000;
-            remaining -= chunk;
+        while (cursorMs > fromMs) {
+            const startMs = Math.max(fromMs, cursorMs - max * 1000);
+            if (marketHourSeconds(startMs, cursorMs) > 0) {
+                const durationSec = Math.ceil((cursorMs - startMs) / 1000);
+                const bars = await fetchChunk({
+                    contract,
+                    endMs: cursorMs,
+                    durationSec,
+                    tf
+                });
+                buffer.push(...bars);
+            }
+            cursorMs = startMs;
         }
     }
 
