@@ -53,12 +53,13 @@ function isHoliday(unixSec) {
     return HOLIDAYS.has(`${p.month}-${p.day}`);
 }
 
-function isMarketOpen(unixSec) {
+function isMarketOpen(unixSec, checkHours = true) {
     const d = new Date(unixSec * 1000);
     const p = nyParts(d);
     const wd = new Date(`${p.year}-${p.month}-${p.day}T12:00:00Z`).getUTCDay();
     if (wd === 0 || wd === 6) return false;
     if (HOLIDAYS.has(`${p.month}-${p.day}`)) return false;
+    if (!checkHours) return true;
     const minutes = +p.hour * 60 + +p.minute;
     return minutes >= 4 * 60 && minutes < 20 * 60;
 }
@@ -92,7 +93,7 @@ function expectedBarTimestamps(fromSec, toSec, tf) {
     }
     let cur = Math.floor(fromSec / step) * step;
     while (cur < toSec) {
-        if (isMarketOpen(cur)) out.push(cur);
+        if (isMarketOpen(cur, true)) out.push(cur);
         cur += step;
     }
     return out;

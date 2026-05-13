@@ -7,10 +7,21 @@ function marketHourSeconds(fromMs, toMs) {
     const toSec = Math.ceil(toMs / 60000) * 60;
     let count = 0;
     for (let s = fromSec; s < toSec; s += 60) {
-        if (market.isMarketOpen(s)) count += 60;
+        if (market.isMarketOpen(s, true)) count += 60;
     }
     return count;
 }
+
+function marketCountDays(fromMs, toMs) {
+    const fromSec = Math.floor(fromMs / 1000);
+    const toSec = Math.ceil(toMs / 1000);
+    let count = 0;
+    for (let s = fromSec; s < toSec; s += 86400) {
+        if (market.isMarketOpen(s, false)) count += 1;
+    }
+    return Math.max(1, count);
+}
+
 
 function dailyTsToUnixSec(yyyymmdd) {
     const m = String(yyyymmdd).match(/^(\d{4})(\d{2})(\d{2})$/);
@@ -53,7 +64,7 @@ async function importRange({ symbol, timeframe, fromMs, toMs }) {
 
     const buffer = [];
     if (tf === '1d') {
-        const days = Math.max(1, Math.ceil((toMs - fromMs) / 86400000));
+        const days = marketCountDays(fromMs, toMs);
         const raw = await ib.getHistoricalData({
             contract,
             endDateTime: market.formatIbEndDateTime(toMs),
@@ -86,7 +97,7 @@ async function importRange({ symbol, timeframe, fromMs, toMs }) {
 
     const fromSec = Math.floor(fromMs / 1000);
     const toSec = Math.floor(toMs / 1000);
-    const filtered = buffer.filter(c => c[0] >= fromSec && c[0] < toSec);
+    const filtered = tf === '1d' ? buffer : buffer.filter(c => c[0] >= fromSec && c[0] < toSec);
 
     const abs = store.pathFor(symbol, tf, toMs);
     const existing = store.readCandles(abs);
