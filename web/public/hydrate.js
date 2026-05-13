@@ -15,6 +15,31 @@ for (const el of document.querySelectorAll('[data-fmt-ts]')) {
     if (Number.isFinite(ts) && ts > 0) el.textContent = formatNYLocal(ts);
 }
 
+for (const btn of document.querySelectorAll('button.convert-to-5m')) {
+    btn.addEventListener('click', async () => {
+        if (btn.dataset.busy === '1') return;
+        btn.dataset.busy = '1';
+        const original = btn.textContent;
+        btn.textContent = 'Converting…';
+        btn.disabled = true;
+        try {
+            const r = await fetch('/api/convert-to-5m', {
+                method: 'POST',
+                headers: { 'content-type': 'application/json' },
+                body: JSON.stringify({ ym: btn.dataset.ym, name: btn.dataset.name })
+            });
+            const body = await r.json().catch(() => ({}));
+            if (!r.ok) throw new Error(body.error || r.statusText);
+            location.href = `/file/${encodeURIComponent(body.ym)}/${encodeURIComponent(body.name)}`;
+        } catch (err) {
+            alert('Erro ao converter: ' + err.message);
+            btn.textContent = original;
+            btn.disabled = false;
+            delete btn.dataset.busy;
+        }
+    });
+}
+
 for (const link of document.querySelectorAll('a.fetch-meta')) {
     link.addEventListener('click', async (e) => {
         e.preventDefault();

@@ -6,6 +6,7 @@ const fileAction = require('./actions/file');
 const importAction = require('./actions/import');
 const rangeAction = require('./actions/range');
 const stockinfoAction = require('./actions/stockinfo');
+const convertAction = require('./actions/convert');
 
 const { foldersPage } = require('./pages/folders');
 const { filesPage } = require('./pages/files');
@@ -62,6 +63,7 @@ app.get('/lightweight/:ym/:name', (req, res) => {
 app.post('/api/import', importAction.postImport);
 app.post('/api/range', rangeAction.postRange);
 app.post('/api/stockinfo', stockinfoAction.postFetchMeta);
+app.post('/api/convert-to-5m', convertAction.postConvertTo5m);
 
 app.use('/vendor/highcharts', express.static(path.join(__dirname, '..', 'node_modules', 'highcharts')));
 app.use('/assets', express.static(path.join(__dirname, 'public')));

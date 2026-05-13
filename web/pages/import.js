@@ -13,7 +13,7 @@ function defaultFromTo() {
 
 function importPage(query = {}) {
     const symbol = query.symbol || '';
-    const timeframe = query.timeframe || '5m';
+    const timeframe = query.timeframe || '1m';
     let from = query.from || '';
     let to = query.to || '';
 
