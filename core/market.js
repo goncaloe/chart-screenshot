@@ -1,6 +1,6 @@
-const HOLIDAYS_2026 = new Set([
-    '2026-01-01', '2026-01-19', '2026-02-16', '2026-04-03', '2026-05-25',
-    '2026-06-19', '2026-07-03', '2026-09-07', '2026-11-26', '2026-12-25'
+const HOLIDAYS = new Set([
+    '01-01', '01-19', '02-16', '04-03', '05-25',
+    '06-19', '07-03', '09-07', '11-26', '12-25'
 ]);
 
 const NY_TZ = 'America/New_York';
@@ -48,12 +48,17 @@ function nyDateKey(unixSec) {
     return `${p.year}-${p.month}-${p.day}`;
 }
 
+function isHoliday(unixSec) {
+    const p = nyParts(new Date(unixSec * 1000));
+    return HOLIDAYS.has(`${p.month}-${p.day}`);
+}
+
 function isMarketOpen(unixSec) {
     const d = new Date(unixSec * 1000);
     const p = nyParts(d);
     const wd = new Date(`${p.year}-${p.month}-${p.day}T12:00:00Z`).getUTCDay();
     if (wd === 0 || wd === 6) return false;
-    if (HOLIDAYS_2026.has(`${p.year}-${p.month}-${p.day}`)) return false;
+    if (HOLIDAYS.has(`${p.month}-${p.day}`)) return false;
     const minutes = +p.hour * 60 + +p.minute;
     return minutes >= 4 * 60 && minutes < 20 * 60;
 }
@@ -80,7 +85,7 @@ function expectedBarTimestamps(fromSec, toSec, tf) {
         while (cur < toSec) {
             const key = nyDateKey(cur);
             const wd = new Date(`${key}T12:00:00Z`).getUTCDay();
-            if (wd !== 0 && wd !== 6 && !HOLIDAYS_2026.has(key)) out.push(cur);
+            if (wd !== 0 && wd !== 6 && !isHoliday(cur)) out.push(cur);
             cur += step;
         }
         return out;
@@ -114,7 +119,8 @@ function utcNyOffset() {
 
 module.exports = {
     NY_TZ,
-    HOLIDAYS_2026,
+    HOLIDAYS,
+    isHoliday,
     parseNYLocal,
     formatNYLocal,
     isMarketOpen,
