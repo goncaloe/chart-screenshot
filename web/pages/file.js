@@ -19,6 +19,7 @@ function filePage(f) {
             <a class="btn" href="/chart/${encodeURIComponent(f.ym)}/${encodeURIComponent(f.name)}">Open chart</a>
             <a class="btn" href="/lightweight/${encodeURIComponent(f.ym)}/${encodeURIComponent(f.name)}">Lightweight</a>
             <a class="btn secondary" href="${importHref}">Import more</a>
+            ${f.timeframe === '1m' ? `<button class="btn secondary convert-to-5m" type="button" data-ym="${escapeHtml(f.ym)}" data-name="${escapeHtml(f.name)}">Convert to 5m</button>` : ''}
         </div>
         <p class="muted">
             ${f.count} candles

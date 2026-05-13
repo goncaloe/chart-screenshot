@@ -73,7 +73,7 @@ module.exports = function buildPayload(file){
         throw new Error('File not found: ' + filepath);
     }
     filename = path.basename(filepath);
-    const m = filename.match(/^([A-Z]{1,5})_(1m|5m|1d)\.json$/);
+    const m = filename.match(/^([A-Z0-9.\-]+)_(1m|5m|1d)\.json$/);
     if (!m) {
         throw new Error('Invalid file format: ' + filename);
     }

@@ -77,7 +77,7 @@ function listFiles(ym) {
             candles
         });
     }
-    out.sort((a, b) => a.symbol.localeCompare(b.symbol) || a.timeframe.localeCompare(b.timeframe));
+    out.sort((a, b) => (a.lastTs ?? -Infinity) - (b.lastTs ?? -Infinity));
     return out;
 }
 
