@@ -40,6 +40,82 @@ for (const btn of document.querySelectorAll('button.convert-to-5m')) {
     });
 }
 
+for (const slider of document.querySelectorAll('.range-slider')) {
+    const inputs = slider.querySelectorAll('input[type=range]');
+    const fromInput = inputs[0];
+    const toInput = inputs[1];
+    const fill = slider.querySelector('.range-fill');
+    const invLeft = slider.querySelector('.inverse-left');
+    const invRight = slider.querySelector('.inverse-right');
+    const thumbs = slider.querySelectorAll('.thumb');
+    const firstTs = +slider.dataset.firstts;
+    const lastTs = +slider.dataset.lastts;
+    const parent = slider.parentElement;
+    const fromLabel = parent.querySelector('[data-role="from-label"]');
+    const toLabel = parent.querySelector('[data-role="to-label"]');
+
+    const tsFor = v => Math.round(firstTs + (lastTs - firstTs) * (v / 1000));
+
+    function render() {
+        const from = +fromInput.value;
+        const to = +toInput.value;
+        const fromPct = (from / 1000) * 100;
+        const toPct = (to / 1000) * 100;
+        invLeft.style.width = fromPct + '%';
+        invRight.style.width = (100 - toPct) + '%';
+        fill.style.left = fromPct + '%';
+        fill.style.right = (100 - toPct) + '%';
+        thumbs[0].style.left = fromPct + '%';
+        thumbs[1].style.left = toPct + '%';
+        const fromTs = tsFor(from);
+        const toTs = tsFor(to);
+        slider.dataset.fromTs = fromTs;
+        slider.dataset.toTs = toTs;
+        if (fromLabel) fromLabel.textContent = formatNYLocal(fromTs);
+        if (toLabel) toLabel.textContent = formatNYLocal(toTs);
+    }
+
+    fromInput.addEventListener('input', () => {
+        fromInput.value = Math.min(+fromInput.value, +toInput.value - 1);
+        render();
+    });
+    toInput.addEventListener('input', () => {
+        toInput.value = Math.max(+toInput.value, +fromInput.value + 1);
+        render();
+    });
+    render();
+}
+
+for (const btn of document.querySelectorAll('button.range-delete')) {
+    btn.addEventListener('click', async () => {
+        if (btn.dataset.busy === '1') return;
+        const slider = document.querySelector('.range-slider');
+        if (!slider) return;
+        const fromTs = +slider.dataset.fromTs;
+        const toTs = +slider.dataset.toTs;
+        if (!confirm(`Delete candles from ${formatNYLocal(fromTs)} to ${formatNYLocal(toTs)}?`)) return;
+        btn.dataset.busy = '1';
+        const original = btn.textContent;
+        btn.textContent = 'Deleting…';
+        btn.disabled = true;
+        try {
+            const r = await fetch('/api/delete-range', {
+                method: 'POST',
+                headers: { 'content-type': 'application/json' },
+                body: JSON.stringify({ ym: btn.dataset.ym, name: btn.dataset.name, fromTs, toTs })
+            });
+            const body = await r.json().catch(() => ({}));
+            if (!r.ok) throw new Error(body.error || r.statusText);
+            location.reload();
+        } catch (err) {
+            alert('Erro ao apagar: ' + err.message);
+            btn.textContent = original;
+            btn.disabled = false;
+            delete btn.dataset.busy;
+        }
+    });
+}
+
 for (const link of document.querySelectorAll('a.fetch-meta')) {
     link.addEventListener('click', async (e) => {
         e.preventDefault();

@@ -27,6 +27,23 @@ function filePage(f) {
             · ${f.ranges.length} contiguous range(s)
         </p>
         <div class="svg-full" data-tf="${escapeHtml(f.timeframe)}" data-candles='${attr(f.candles)}'></div>
+        ${f.firstTs && f.lastTs ? `
+        <div class="range-slider" data-firstts="${f.firstTs}" data-lastts="${f.lastTs}">
+            <div class="track">
+                <div class="inverse-left" style="width:0%"></div>
+                <div class="inverse-right" style="width:0%"></div>
+                <div class="range-fill" style="left:0%;right:0%;"></div>
+                <span class="thumb" style="left:0%"></span>
+                <span class="thumb" style="left:100%"></span>
+            </div>
+            <input type="range" min="0" max="1000" value="0" data-role="from">
+            <input type="range" min="0" max="1000" value="1000" data-role="to">
+        </div>
+        <div class="range-info muted">
+            <span data-role="from-label"></span> → <span data-role="to-label"></span>
+        </div>
+        <button class="btn range-delete" type="button" data-ym="${escapeHtml(f.ym)}" data-name="${escapeHtml(f.name)}">Delete Selection</button>
+        ` : ''}
         <h2>Ranges</h2>
         <table>
             <thead><tr><th>#</th><th>Start (NY)</th><th>End (NY)</th><th>Candles</th></tr></thead>

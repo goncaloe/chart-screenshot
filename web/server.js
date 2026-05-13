@@ -64,6 +64,7 @@ app.post('/api/import', importAction.postImport);
 app.post('/api/range', rangeAction.postRange);
 app.post('/api/stockinfo', stockinfoAction.postFetchMeta);
 app.post('/api/convert-to-5m', convertAction.postConvertTo5m);
+app.post('/api/delete-range', fileAction.postDeleteRange);
 
 app.use('/vendor/highcharts', express.static(path.join(__dirname, '..', 'node_modules', 'highcharts')));
 app.use('/assets', express.static(path.join(__dirname, 'public')));
