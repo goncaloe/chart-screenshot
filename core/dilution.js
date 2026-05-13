@@ -128,6 +128,42 @@ module.exports = async function dilutionFetch(symbol) {
         }
     }
 
+    const newsData = await page.evaluate(async (sym) => {
+        try {
+            const r = await fetch(`https://api.dilutiontracker.com/v1/getOhlcvTimeSeriesWithNews?ticker=${sym}`, { credentials: 'include' });
+            if (!r.ok) return null;
+            return await r.json();
+        } catch {
+            return null;
+        }
+    }, symbol);
+
+    const formatNewsDate = (s) => {
+        const m = s.match(/^(\d+)\/(\d+)\/(\d+),\s*(\d+):(\d+):\d+\s*(AM|PM)/i);
+        if (!m) return null;
+        const [, mon, day, year, hh, mm, ampm] = m;
+        let h = Number(hh) % 12;
+        if (ampm.toUpperCase() === 'PM') h += 12;
+        const pad = n => String(n).padStart(2, '0');
+        return `${year}-${pad(Number(mon))}-${pad(Number(day))} ${pad(h)}:${pad(Number(mm))}`;
+    };
+
+    const news = [];
+    if (newsData && Array.isArray(newsData.news)) {
+        const threeDaysAgo = Date.now() - 3 * 24 * 60 * 60 * 1000;
+        const seen = new Set();
+        for (const n of newsData.news) {
+            const raw = n.publishedAtDateTimeString;
+            if (!raw) continue;
+            const ts = new Date(raw).getTime();
+            if (!Number.isFinite(ts) || ts <= threeDaysAgo) continue;
+            const date = formatNewsDate(raw);
+            if (!date || seen.has(date)) continue;
+            seen.add(date);
+            news.push({ title: n.title, date });
+        }
+    }
+
     const cleanObj = function(obj) {
         for (var propName in obj) {
             if (obj[propName] === null || obj[propName] === undefined) {
@@ -136,12 +172,13 @@ module.exports = async function dilutionFetch(symbol) {
         }
         return obj;
     }
-    
+
     return cleanObj({
         shs_float,
         inst_own,
         cps,
         cash,
         country,
+        news,
     });
 }
