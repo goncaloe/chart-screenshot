@@ -8,7 +8,8 @@ function chartPage(f) {
         <div class="crumbs">
             <a href="/">Folders</a> /
             <a href="/folder/${escapeHtml(f.ym)}">${escapeHtml(f.ym)}</a> /
-            <a href="/file/${escapeHtml(f.ym)}/${escapeHtml(f.name)}">${escapeHtml(f.name)}</a> / Chart
+            <a href="/folder/${escapeHtml(f.ym)}/${escapeHtml(f.dd)}">${escapeHtml(f.dd)}</a> /
+            <a href="/file/${escapeHtml(f.ym)}/${escapeHtml(f.dd)}/${escapeHtml(f.name)}">${escapeHtml(f.name)}</a> / Chart
         </div>
         <div id="chart" data-payload='${attr(payload)}'></div>`;
     return layout({

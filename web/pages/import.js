@@ -19,10 +19,13 @@ function importPage(query = {}) {
 
     if (!from && !to && query.ym && symbol && timeframe) {
         try {
-            const f = store.loadFile(query.ym, store.fileName(symbol, timeframe));
-            if (f.candles.length) {
-                from = tsToInputValue(f.candles[0][0]);
-                to = tsToInputValue(f.candles[f.candles.length - 1][0]);
+            const abs = store.findExistingFile(symbol, timeframe, query.ym);
+            if (abs) {
+                const candles = store.readCandles(abs);
+                if (candles.length) {
+                    from = tsToInputValue(candles[0][0]);
+                    to = tsToInputValue(candles[candles.length - 1][0]);
+                }
             }
         } catch {}
     }

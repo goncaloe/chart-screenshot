@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const { ymOfMs, timeframeSeconds, isMarketOpen } = require('./market');
+const { ymOfMs, ddOfMs, timeframeSeconds, isMarketOpen } = require('./market');
 
 const DATA_DIR = path.resolve(__dirname, '..', 'data');
 
@@ -14,8 +14,28 @@ function parseFileName(name) {
     return { symbol: m[1].toUpperCase(), timeframe: m[2].toLowerCase() };
 }
 
-function pathFor(symbol, tf, endMs) {
-    return path.join(DATA_DIR, ymOfMs(endMs), fileName(symbol, tf));
+function pathFor(symbol, tf, candles) {
+    if (!Array.isArray(candles) || candles.length === 0) {
+        throw new Error('pathFor requires non-empty candles to derive ym/dd');
+    }
+    const lastMs = candles[candles.length - 1][0] * 1000;
+    return path.join(DATA_DIR, ymOfMs(lastMs), ddOfMs(lastMs), fileName(symbol, tf));
+}
+
+function findExistingFile(symbol, tf, ym) {
+    const monthDir = path.join(DATA_DIR, ym);
+    if (!fs.existsSync(monthDir)) return null;
+    const name = fileName(symbol, tf);
+    for (const entry of fs.readdirSync(monthDir)) {
+        if (!/^\d{2}$/.test(entry)) continue;
+        const abs = path.join(monthDir, entry, name);
+        if (fs.existsSync(abs)) return abs;
+    }
+    return null;
+}
+
+function stockinfoPathFor(ym, dd) {
+    return path.join(DATA_DIR, ym, String(dd).padStart(2, '0'), 'stockinfo.json');
 }
 
 function readCandles(absPath) {
@@ -55,38 +75,54 @@ function listFolders() {
         .reverse();
 }
 
-function listFiles(ym) {
+function listDays(ym) {
     const dir = path.join(DATA_DIR, ym);
     if (!fs.existsSync(dir)) return [];
+    return fs.readdirSync(dir)
+        .filter(n => /^\d{2}$/.test(n) && fs.statSync(path.join(dir, n)).isDirectory())
+        .sort();
+}
+
+function listFiles(ym, dayFilter) {
+    const monthDir = path.join(DATA_DIR, ym);
+    if (!fs.existsSync(monthDir)) return [];
     const out = [];
-    for (const name of fs.readdirSync(dir)) {
-        const meta = parseFileName(name);
-        if (!meta) continue;
-        const abs = path.join(dir, name);
-        const stat = fs.statSync(abs);
-        let candles = [];
-        try { candles = readCandles(abs); } catch { continue; }
-        out.push({
-            name,
-            symbol: meta.symbol,
-            timeframe: meta.timeframe,
-            size: stat.size,
-            count: candles.length,
-            firstTs: candles.length ? candles[0][0] : null,
-            lastTs: candles.length ? candles[candles.length - 1][0] : null,
-            candles
-        });
+    const days = dayFilter
+        ? [String(dayFilter).padStart(2, '0')]
+        : listDays(ym);
+    for (const dd of days) {
+        const dir = path.join(monthDir, dd);
+        if (!fs.existsSync(dir)) continue;
+        for (const name of fs.readdirSync(dir)) {
+            const meta = parseFileName(name);
+            if (!meta) continue;
+            const abs = path.join(dir, name);
+            const stat = fs.statSync(abs);
+            let candles = [];
+            try { candles = readCandles(abs); } catch { continue; }
+            out.push({
+                name,
+                dd,
+                symbol: meta.symbol,
+                timeframe: meta.timeframe,
+                size: stat.size,
+                count: candles.length,
+                firstTs: candles.length ? candles[0][0] : null,
+                lastTs: candles.length ? candles[candles.length - 1][0] : null,
+                candles
+            });
+        }
     }
     out.sort((a, b) => (a.lastTs ?? -Infinity) - (b.lastTs ?? -Infinity));
     return out;
 }
 
-function loadFile(ym, name) {
+function loadFile(ym, dd, name) {
     const meta = parseFileName(name);
     if (!meta) throw new Error(`Invalid file name: ${name}`);
-    const abs = path.join(DATA_DIR, ym, name);
+    const abs = path.join(DATA_DIR, ym, String(dd).padStart(2, '0'), name);
     const candles = readCandles(abs);
-    return { ...meta, ym, name, candles, count: candles.length, path: abs };
+    return { ...meta, ym, dd: String(dd).padStart(2, '0'), name, candles, count: candles.length, path: abs };
 }
 
 function computeRanges(candles, tf) {
@@ -124,10 +160,13 @@ module.exports = {
     fileName,
     parseFileName,
     pathFor,
+    findExistingFile,
+    stockinfoPathFor,
     readCandles,
     writeCandlesAtomic,
     mergeCandles,
     listFolders,
+    listDays,
     listFiles,
     loadFile,
     computeRanges

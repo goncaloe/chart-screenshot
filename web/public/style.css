@@ -46,3 +46,7 @@ form.import .full { grid-column: 1 / -1; }
 .error { color: #b91c1c; background: #fef2f2; padding: 0.5rem 0.75rem; border-radius: 4px; }
 .ok { color: #065f46; background: #ecfdf5; padding: 0.5rem 0.75rem; border-radius: 4px; }
 #chart { height: 600px; }
+.folder-tree .folder-toggle { cursor: pointer; user-select: none; }
+.folder-tree .folder-toggle .caret { display: inline-block; width: 1rem; color: #6b7280; }
+.folder-tree .day-row td { padding-left: 1.25rem; }
+.folder-tree .tree-indent { display: inline-block; width: 0.75rem; color: #9ca3af; font-family: ui-monospace, monospace; }

@@ -110,6 +110,11 @@ function ymOfMs(ms) {
     return `${p.year}-${p.month}`;
 }
 
+function ddOfMs(ms) {
+    const p = nyParts(new Date(ms));
+    return p.day;
+}
+
 function utcNyOffset() {
     const date = new Date();
     const utc = new Date(date.toLocaleString('en-US', { timeZone: 'UTC' }))
@@ -131,6 +136,7 @@ module.exports = {
     tfMeta,
     formatIbEndDateTime,
     ymOfMs,
+    ddOfMs,
     nyDateKey,
     utcNyOffset
 };

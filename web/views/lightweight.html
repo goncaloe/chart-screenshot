@@ -337,6 +337,8 @@ a#tv-attr-logo {
                 method: 'POST',
                 headers: { 'content-type': 'application/json' },
                 body: JSON.stringify({
+                    ym: payload.ym,
+                    dd: payload.dd,
                     filename: payload.filename,
                     timeframe: payload.timeframe,
                     datestart: range.from,

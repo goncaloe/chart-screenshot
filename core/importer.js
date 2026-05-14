@@ -1,3 +1,4 @@
+const fs = require('fs');
 const ib = require('./ib');
 const market = require('./market');
 const store = require('./store');
@@ -99,13 +100,19 @@ async function importRange({ symbol, timeframe, fromMs, toMs }) {
     const toSec = Math.floor(toMs / 1000);
     const filtered = tf === '1d' ? buffer : buffer.filter(c => c[0] >= fromSec && c[0] < toSec);
 
-    const abs = store.pathFor(symbol, tf, toMs);
-    const existing = store.readCandles(abs);
+    const ym = market.ymOfMs(toMs);
+    const existingAbs = store.findExistingFile(symbol, tf, ym);
+    const existing = existingAbs ? store.readCandles(existingAbs) : [];
     const { merged, added, replaced } = store.mergeCandles(existing, filtered);
-    store.writeCandlesAtomic(abs, merged);
+    if (merged.length === 0) {
+        return { path: existingAbs, fetched: buffer.length, kept: 0, added: 0, replaced: 0, total: 0 };
+    }
+    const newAbs = store.pathFor(symbol, tf, merged);
+    if (existingAbs && existingAbs !== newAbs) fs.unlinkSync(existingAbs);
+    store.writeCandlesAtomic(newAbs, merged);
 
     return {
-        path: abs,
+        path: newAbs,
         fetched: buffer.length,
         kept: filtered.length,
         added,

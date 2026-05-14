@@ -1,6 +1,50 @@
 import { renderCandlesSvg } from './svg.js';
 import { formatNYLocal } from './market.js';
 
+for (const row of document.querySelectorAll('.folder-tree .folder-row')) {
+    const toggle = row.querySelector('.folder-toggle');
+    if (!toggle) continue;
+    toggle.addEventListener('click', async (e) => {
+        e.preventDefault();
+        const ym = row.dataset.ym;
+        const caret = toggle.querySelector('.caret');
+        const expanded = row.dataset.expanded === '1';
+        if (expanded) {
+            for (const r of row.parentElement.querySelectorAll(`tr.day-row[data-parent="${ym}"]`)) r.remove();
+            row.dataset.expanded = '0';
+            if (caret) caret.textContent = '▸';
+            return;
+        }
+        let days = row._days;
+        if (!days) {
+            try {
+                const r = await fetch(`/api/days/${encodeURIComponent(ym)}`);
+                const body = await r.json();
+                if (!r.ok) throw new Error(body.error || r.statusText);
+                days = body.days;
+                row._days = days;
+            } catch (err) {
+                const tr = document.createElement('tr');
+                tr.className = 'day-row';
+                tr.dataset.parent = ym;
+                tr.innerHTML = `<td><span class="tree-indent">|</span> <span class="error">${err.message}</span></td>`;
+                row.after(tr);
+                row.dataset.expanded = '1';
+                if (caret) caret.textContent = '▾';
+                return;
+            }
+        }
+        const rows = days.length
+            ? days.map(d => `<tr class="day-row" data-parent="${ym}">
+                <td><span class="tree-indent">|</span> <a href="/folder/${encodeURIComponent(ym)}/${encodeURIComponent(d)}">${d}</a></td>
+            </tr>`).join('')
+            : `<tr class="day-row" data-parent="${ym}"><td><span class="tree-indent">|</span> <span class="muted">no days</span></td></tr>`;
+        row.insertAdjacentHTML('afterend', rows);
+        row.dataset.expanded = '1';
+        if (caret) caret.textContent = '▾';
+    });
+}
+
 for (const cell of document.querySelectorAll('.svg-cell, .svg-full')) {
     const candles = JSON.parse(cell.dataset.candles || '[]');
     const tf = cell.dataset.tf;
@@ -26,11 +70,11 @@ for (const btn of document.querySelectorAll('button.convert-to-5m')) {
             const r = await fetch('/api/convert-to-5m', {
                 method: 'POST',
                 headers: { 'content-type': 'application/json' },
-                body: JSON.stringify({ ym: btn.dataset.ym, name: btn.dataset.name })
+                body: JSON.stringify({ ym: btn.dataset.ym, dd: btn.dataset.dd, name: btn.dataset.name })
             });
             const body = await r.json().catch(() => ({}));
             if (!r.ok) throw new Error(body.error || r.statusText);
-            location.href = `/file/${encodeURIComponent(body.ym)}/${encodeURIComponent(body.name)}`;
+            location.href = `/file/${encodeURIComponent(body.ym)}/${encodeURIComponent(body.dd)}/${encodeURIComponent(body.name)}`;
         } catch (err) {
             alert('Erro ao converter: ' + err.message);
             btn.textContent = original;
@@ -102,7 +146,7 @@ for (const btn of document.querySelectorAll('button.range-delete')) {
             const r = await fetch('/api/delete-range', {
                 method: 'POST',
                 headers: { 'content-type': 'application/json' },
-                body: JSON.stringify({ ym: btn.dataset.ym, name: btn.dataset.name, fromTs, toTs })
+                body: JSON.stringify({ ym: btn.dataset.ym, dd: btn.dataset.dd, name: btn.dataset.name, fromTs, toTs })
             });
             const body = await r.json().catch(() => ({}));
             if (!r.ok) throw new Error(body.error || r.statusText);

@@ -1,22 +1,26 @@
 const fs = require('fs');
 const path = require('path');
-
-const DATA_DIR = path.resolve(__dirname, '..', '..', 'data');
+const store = require('../../core/store');
 
 function pad(n) { return String(n).padStart(2, '0'); }
 
 function postRange(req, res) {
     try {
-        const { filename, timeframe, datestart, dateend } = req.body || {};
+        const { ym: ymIn, dd: ddIn, filename, timeframe, datestart, dateend } = req.body || {};
         if (!filename || !timeframe || typeof datestart !== 'number' || typeof dateend !== 'number') {
             return res.status(400).json({ error: 'filename, timeframe, datestart, dateend required' });
         }
-        const d = new Date(dateend * 1000);
-        const ym = `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}`;
-        const dd = pad(d.getUTCDate());
-        const dir = path.join(DATA_DIR, ym);
-        fs.mkdirSync(dir, { recursive: true });
-        const filePath = path.join(dir, `stockinfo-${dd}.json`);
+        let ym, dd;
+        if (/^\d{4}-\d{2}$/.test(ymIn || '') && /^\d{2}$/.test(ddIn || '')) {
+            ym = ymIn;
+            dd = ddIn;
+        } else {
+            const d = new Date(dateend * 1000);
+            ym = `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}`;
+            dd = pad(d.getUTCDate());
+        }
+        const filePath = store.stockinfoPathFor(ym, dd);
+        fs.mkdirSync(path.dirname(filePath), { recursive: true });
 
         let ranges = [];
         if (fs.existsSync(filePath)) {

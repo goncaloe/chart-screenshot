@@ -5,8 +5,10 @@ function foldersPage({ folders }) {
         ? `<h1>Folders</h1><p class="muted">No data folders yet.</p>
            <a class="btn" href="/import">Import historical data</a>`
         : `<h1>Folders</h1>
-           <table><thead><tr><th>Month</th></tr></thead><tbody>
-           ${folders.map(f => `<tr><td><a href="/folder/${escapeHtml(f)}">${escapeHtml(f)}</a></td></tr>`).join('')}
+           <table class="folder-tree"><thead><tr><th>Month</th></tr></thead><tbody>
+           ${folders.map(f => `<tr class="folder-row" data-ym="${escapeHtml(f)}">
+               <td><a href="#" class="folder-toggle"><span class="caret">▸</span> ${escapeHtml(f)}</a></td>
+           </tr>`).join('')}
            </tbody></table>`;
     return layout({ title: 'Folders', body });
 }

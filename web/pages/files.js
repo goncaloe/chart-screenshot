@@ -6,18 +6,11 @@ function fmtSize(n) {
     return (n / 1024 / 1024).toFixed(2) + ' MB';
 }
 
-function filesPage({ ym, files, day, timeframe }) {
-    const showStockinfos = !!day;
+function filesPage({ ym, dd, files, timeframe }) {
     const rows = files.map(f => {
-        const link = `/file/${encodeURIComponent(ym)}/${encodeURIComponent(f.name)}`;
-        const chartHref = `/chart/${encodeURIComponent(ym)}/${encodeURIComponent(f.name)}`;
-        const lightweightHref = `/lightweight/${encodeURIComponent(ym)}/${encodeURIComponent(f.name)}`;
-        const rangeCell = showStockinfos
-            ? `<td style="text-align: center;"><input type="checkbox" disabled${f.hasRange ? ' checked' : ''}></td>`
-            : '';
-        const metaCell = showStockinfos
-            ? `<td style="text-align: center;"><input type="checkbox" disabled${f.hasMeta ? ' checked' : ''}><a href="#" class="fetch-meta" data-ym="${escapeHtml(ym)}" data-day="${day}" data-filename="${escapeHtml(f.name)}">↓</a></td>`
-            : '';
+        const link = `/file/${encodeURIComponent(ym)}/${encodeURIComponent(f.dd)}/${encodeURIComponent(f.name)}`;
+        const chartHref = `/chart/${encodeURIComponent(ym)}/${encodeURIComponent(f.dd)}/${encodeURIComponent(f.name)}`;
+        const lightweightHref = `/lightweight/${encodeURIComponent(ym)}/${encodeURIComponent(f.dd)}/${encodeURIComponent(f.name)}`;
         return `<tr>
             <td><a href="${link}">${escapeHtml(f.symbol)}</a></td>
             <td>${escapeHtml(f.timeframe)}</td>
@@ -26,18 +19,11 @@ function filesPage({ ym, files, day, timeframe }) {
             <td data-fmt-ts="${f.lastTs ?? ''}">${f.lastTs ?? '-'}</td>
             <td>${fmtSize(f.size)}</td>
             <td class="svg-cell" data-tf="${escapeHtml(f.timeframe)}" data-candles='${attr(f.candles)}'></td>
-            ${rangeCell}
-            ${metaCell}
+            <td style="text-align: center;"><input type="checkbox" disabled${f.hasRange ? ' checked' : ''}></td>
+            <td style="text-align: center;"><input type="checkbox" disabled${f.hasMeta ? ' checked' : ''}><a href="#" class="fetch-meta" data-ym="${escapeHtml(ym)}" data-day="${escapeHtml(dd)}" data-filename="${escapeHtml(f.name)}">↓</a></td>
             <td style="text-align: right;"><a href="${chartHref}">chart</a> | <a href="${lightweightHref}">lightweight</a></td>
         </tr>`;
     }).join('');
-
-    const dayOptions = ['<option value="">All days</option>']
-        .concat(Array.from({ length: 31 }, (_, i) => {
-            const d = i + 1;
-            return `<option value="${d}"${d === day ? ' selected' : ''}>${d}</option>`;
-        }))
-        .join('');
 
     const tfOptions = ['<option value="">All TFs</option>']
         .concat(['1m', '5m', '1d'].map(tf =>
@@ -46,11 +32,14 @@ function filesPage({ ym, files, day, timeframe }) {
         .join('');
 
     const body = `
-        <div class="crumbs"><a href="/">Folders</a> / ${escapeHtml(ym)}</div>
-        <h1>${escapeHtml(ym)}</h1>
+        <div class="crumbs">
+            <a href="/">Folders</a> /
+            <a href="/folder/${encodeURIComponent(ym)}">${escapeHtml(ym)}</a> /
+            ${escapeHtml(dd)}
+        </div>
+        <h1>${escapeHtml(ym)} / ${escapeHtml(dd)}</h1>
         <div class="actions">
-            <form class="filter" method="get" action="/folder/${encodeURIComponent(ym)}">
-                <select name="day">${dayOptions}</select>
+            <form class="filter" method="get" action="/folder/${encodeURIComponent(ym)}/${encodeURIComponent(dd)}">
                 <select name="timeframe">${tfOptions}</select>
                 <button class="btn secondary" type="submit">Filtrar</button>
             </form>
@@ -62,13 +51,13 @@ function filesPage({ ym, files, day, timeframe }) {
                 <th>First (NY)</th><th>Last (NY)</th>
                 <th>Size</th>
                 <th style="text-align: center;">Candles</th>
-                ${showStockinfos ? '<th style="text-align: center;">Range</th>' : ''}
-                ${showStockinfos ? '<th style="text-align: center;">Meta</th>' : ''}
+                <th style="text-align: center;">Range</th>
+                <th style="text-align: center;">Meta</th>
                 <th></th>
             </tr></thead>
             <tbody>${rows}</tbody>
-        </table>` : `<p class="muted">No files in this folder.</p>`}`;
-    return layout({ title: ym, body });
+        </table>` : `<p class="muted">No files in this day.</p>`}`;
+    return layout({ title: `${ym}/${dd}`, body });
 }
 
 module.exports = { filesPage };

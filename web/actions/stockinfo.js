@@ -3,8 +3,6 @@ const path = require('path');
 const store = require('../../core/store');
 const dilutionFetch = require('../../core/dilution');
 
-function pad(n) { return String(n).padStart(2, '0'); }
-
 async function postFetchMeta(req, res) {
     try {
         const { ym, day, filename } = req.body || {};
@@ -17,9 +15,8 @@ async function postFetchMeta(req, res) {
         const info = await dilutionFetch(meta.symbol);
         if (!info) return res.status(404).json({ error: `no dilution data for ${meta.symbol}` });
 
-        const dir = path.join(store.DATA_DIR, ym);
-        fs.mkdirSync(dir, { recursive: true });
-        const filePath = path.join(dir, `stockinfo-${pad(d)}.json`);
+        const filePath = store.stockinfoPathFor(ym, d);
+        fs.mkdirSync(path.dirname(filePath), { recursive: true });
 
         let list = [];
         if (fs.existsSync(filePath)) {

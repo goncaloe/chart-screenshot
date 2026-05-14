@@ -20,23 +20,24 @@ function aggregate1mTo5m(candles1m) {
 
 async function postConvertTo5m(req, res) {
     try {
-        const { ym, name } = req.body || {};
+        const { ym, dd, name } = req.body || {};
         if (!/^\d{4}-\d{2}$/.test(ym || '')) return res.status(400).json({ error: 'invalid ym' });
+        if (!/^\d{2}$/.test(dd || '')) return res.status(400).json({ error: 'invalid dd' });
         const meta = store.parseFileName(name || '');
         if (!meta) return res.status(400).json({ error: 'invalid filename' });
         if (meta.timeframe !== '1m') return res.status(400).json({ error: 'source must be 1m' });
 
-        const src = store.loadFile(ym, name);
+        const src = store.loadFile(ym, dd, name);
         if (!src.candles.length) return res.status(400).json({ error: 'source file is empty' });
 
         const aggregated = aggregate1mTo5m(src.candles);
         const destName = store.fileName(meta.symbol, '5m');
-        const destPath = path.join(store.DATA_DIR, ym, destName);
+        const destPath = path.join(store.DATA_DIR, ym, dd, destName);
         const existing = store.readCandles(destPath);
         const { merged, added, replaced } = store.mergeCandles(existing, aggregated);
         store.writeCandlesAtomic(destPath, merged);
 
-        res.json({ ok: true, ym, name: destName, added, replaced, total: merged.length });
+        res.json({ ok: true, ym, dd, name: destName, added, replaced, total: merged.length });
     } catch (e) {
         res.status(500).json({ error: e.message });
     }

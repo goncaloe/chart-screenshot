@@ -1,11 +1,8 @@
 const fs = require('fs');
-const path = require('path');
 const store = require('../../core/store');
-const { nyDateKey } = require('../../core/market');
 
 function readStockinfos(ym, day) {
-    const dd = String(day).padStart(2, '0');
-    const abs = path.join(store.DATA_DIR, ym, `stockinfo-${dd}.json`);  
+    const abs = store.stockinfoPathFor(ym, day);
     if (!fs.existsSync(abs)) return new Map();
     const txt = fs.readFileSync(abs, 'utf8');
     if (!txt.trim()) return new Map();
@@ -25,17 +22,21 @@ function getFolders() {
     return { folders: store.listFolders() };
 }
 
-function getFiles(ym, day, timeframe) {
+function getDays(ym) {
     if (!/^\d{4}-\d{2}$/.test(ym)) throw new Error('Invalid ym');
-    const selectedDay = Number.isInteger(day) && day >= 1 && day <= 31 ? day : null;
-    const dayKey = selectedDay ? `${ym}-${String(selectedDay).padStart(2, '0')}` : null;
+    return { ym, days: store.listDays(ym) };
+}
+
+function getFiles(ym, dd, timeframe) {
+    if (!/^\d{4}-\d{2}$/.test(ym)) throw new Error('Invalid ym');
+    if (!/^\d{2}$/.test(dd)) throw new Error('Invalid dd');
     const selectedTf = ['1m', '5m', '1d'].includes(timeframe) ? timeframe : null;
-    const stockinfo = selectedDay ? readStockinfos(ym, selectedDay) : null;
-    const files = store.listFiles(ym)
+    const stockinfo = readStockinfos(ym, dd);
+    const files = store.listFiles(ym, dd)
         .filter(f => !selectedTf || f.timeframe === selectedTf)
-        .filter(f => !dayKey || f.candles.some(c => nyDateKey(c[0]) === dayKey))
         .map(f => ({
             name: f.name,
+            dd: f.dd,
             symbol: f.symbol,
             timeframe: f.timeframe,
             size: f.size,
@@ -43,10 +44,10 @@ function getFiles(ym, day, timeframe) {
             firstTs: f.firstTs,
             lastTs: f.lastTs,
             candles: f.candles,
-            hasRange: stockinfo?.get(f.name)?.['hasRange' + f.timeframe] || false,
-            hasMeta: stockinfo?.get(f.name)?.hasMeta || false
+            hasRange: stockinfo.get(f.name)?.['hasRange' + f.timeframe] || false,
+            hasMeta: stockinfo.get(f.name)?.hasMeta || false
         }));
-    return { ym, files, day: selectedDay, timeframe: selectedTf };
+    return { ym, dd, files, timeframe: selectedTf };
 }
 
-module.exports = { getFolders, getFiles };
+module.exports = { getFolders, getDays, getFiles };

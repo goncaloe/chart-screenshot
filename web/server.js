@@ -9,6 +9,7 @@ const stockinfoAction = require('./actions/stockinfo');
 const convertAction = require('./actions/convert');
 
 const { foldersPage } = require('./pages/folders');
+const { daysPage } = require('./pages/days');
 const { filesPage } = require('./pages/files');
 const { filePage } = require('./pages/file');
 const { chartPage } = require('./pages/chart');
@@ -24,25 +25,40 @@ app.get('/', (req, res) => {
 
 app.get('/folder/:ym', (req, res) => {
     try {
-        const day = req.query.day ? Number(req.query.day) : null;
-        const timeframe = req.query.timeframe || null;
-        res.send(filesPage(foldersAction.getFiles(req.params.ym, day, timeframe)));
+        res.send(daysPage(foldersAction.getDays(req.params.ym)));
     } catch (e) {
         res.status(400).send(`<pre>${e.message}</pre>`);
     }
 });
 
-app.get('/file/:ym/:name', (req, res) => {
+app.get('/api/days/:ym', (req, res) => {
     try {
-        res.send(filePage(fileAction.getFile(req.params.ym, req.params.name)));
+        res.json(foldersAction.getDays(req.params.ym));
+    } catch (e) {
+        res.status(400).json({ error: e.message });
+    }
+});
+
+app.get('/folder/:ym/:dd', (req, res) => {
+    try {
+        const timeframe = req.query.timeframe || null;
+        res.send(filesPage(foldersAction.getFiles(req.params.ym, req.params.dd, timeframe)));
+    } catch (e) {
+        res.status(400).send(`<pre>${e.message}</pre>`);
+    }
+});
+
+app.get('/file/:ym/:dd/:name', (req, res) => {
+    try {
+        res.send(filePage(fileAction.getFile(req.params.ym, req.params.dd, req.params.name)));
     } catch (e) {
         res.status(404).send(`<pre>${e.message}</pre>`);
     }
 });
 
-app.get('/chart/:ym/:name', (req, res) => {
+app.get('/chart/:ym/:dd/:name', (req, res) => {
     try {
-        res.send(chartPage(fileAction.getFile(req.params.ym, req.params.name)));
+        res.send(chartPage(fileAction.getFile(req.params.ym, req.params.dd, req.params.name)));
     } catch (e) {
         res.status(404).send(`<pre>${e.message}</pre>`);
     }
@@ -52,9 +68,9 @@ app.get('/import', (req, res) => {
     res.send(importPage(req.query));
 });
 
-app.get('/lightweight/:ym/:name', (req, res) => {
+app.get('/lightweight/:ym/:dd/:name', (req, res) => {
     try {
-        res.send(lightweightPage(req.params.ym, req.params.name));
+        res.send(lightweightPage(req.params.ym, req.params.dd, req.params.name));
     } catch (e) {
         res.status(404).send(`<pre>${e.message}</pre>`);
     }
