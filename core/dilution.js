@@ -51,7 +51,7 @@ function advancedRound(num) {
 }
 
 
-module.exports = async function dilutionFetch(symbol) {
+module.exports = async function dilutionFetch(symbol, newsStartDate, newsEndDate) {
     const browser = await chromium.connectOverCDP('http://127.0.0.1:9222');
     const context = browser.contexts()[0] ?? await browser.newContext();
     const pages = context.pages();
@@ -128,7 +128,7 @@ module.exports = async function dilutionFetch(symbol) {
         }
     }
 
-    const newsData = await page.evaluate(async (sym) => {
+    const newsData = newsStartDate && newsEndDate ? await page.evaluate(async (sym) => {
         try {
             const r = await fetch(`https://api.dilutiontracker.com/v1/getOhlcvTimeSeriesWithNews?ticker=${sym}`, { credentials: 'include' });
             if (!r.ok) return null;
@@ -136,7 +136,7 @@ module.exports = async function dilutionFetch(symbol) {
         } catch {
             return null;
         }
-    }, symbol);
+    }, symbol) : null;
 
     const formatNewsDate = (s) => {
         const m = s.match(/^(\d+)\/(\d+)\/(\d+),\s*(\d+):(\d+):\d+\s*(AM|PM)/i);
@@ -150,13 +150,14 @@ module.exports = async function dilutionFetch(symbol) {
 
     const news = [];
     if (newsData && Array.isArray(newsData.news)) {
-        const threeDaysAgo = Date.now() - 3 * 24 * 60 * 60 * 1000;
+        const newsStartDateMs = new Date(newsStartDate).getTime();
+        const newsEndDateMs = new Date(newsEndDate).getTime();
         const seen = new Set();
         for (const n of newsData.news) {
             const raw = n.publishedAtDateTimeString;
             if (!raw) continue;
             const ts = new Date(raw).getTime();
-            if (!Number.isFinite(ts) || ts <= threeDaysAgo) continue;
+            if (!Number.isFinite(ts) || ts < newsStartDateMs || ts > newsEndDateMs) continue;
             const date = formatNewsDate(raw);
             if (!date || seen.has(date)) continue;
             seen.add(date);

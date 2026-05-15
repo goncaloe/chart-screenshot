@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const store = require('../../core/store');
+const market = require('../../core/market');
 const dilutionFetch = require('../../core/dilution');
 
 async function postFetchInfo(req, res) {
@@ -12,7 +13,14 @@ async function postFetchInfo(req, res) {
         const info = store.parseFileName(filename || '');
         if (!info) return res.status(400).json({ error: 'invalid filename' });
 
-        const dinfo = await dilutionFetch(info.symbol);
+        const [yy, mm] = ym.split('-').map(Number);
+        const startUtc = new Date(Date.UTC(yy, mm - 1, d - 2));
+        const startStr = `${startUtc.getUTCFullYear()}-${pad(startUtc.getUTCMonth() + 1)}-${pad(startUtc.getUTCDate())} 04:00`;
+        const endStr = `${yy}-${pad(mm)}-${pad(d)} 20:00`;
+        const newsStartDate = market.parseNYLocal(startStr);
+        const newsEndDate = market.parseNYLocal(endStr);
+
+        const dinfo = await dilutionFetch(info.symbol, newsStartDate, newsEndDate);
         if (!dinfo) return res.status(404).json({ error: `no dilution data for ${info.symbol}` });
 
         const filePath = store.stockinfoPathFor(ym, d);
