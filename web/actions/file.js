@@ -32,12 +32,19 @@ async function postDeleteRange(req, res) {
         if (!Number.isFinite(from) || !Number.isFinite(to) || from >= to) {
             return res.status(400).json({ error: 'invalid range' });
         }
+        const meta = store.parseFileName(name);
         const abs = path.join(store.DATA_DIR, ym, dd, name);
         const existing = store.readCandles(abs);
         const kept = existing.filter(c => c[0] < from || c[0] > to);
         const removed = existing.length - kept.length;
-        store.writeCandlesAtomic(abs, kept);
-        res.json({ ok: true, removed, total: kept.length });
+        let newAbs = abs;
+        if (kept.length > 0) {
+            newAbs = store.pathFor(meta.symbol, meta.timeframe, kept);
+            if (newAbs !== abs && fs.existsSync(abs)) fs.unlinkSync(abs);
+        }
+        store.writeCandlesAtomic(newAbs, kept);
+        const rel = path.relative(store.DATA_DIR, newAbs).split(path.sep);
+        res.json({ ok: true, removed, total: kept.length, ym: rel[0], dd: rel[1], name: rel[2] });
     } catch (e) {
         res.status(500).json({ error: e.message });
     }

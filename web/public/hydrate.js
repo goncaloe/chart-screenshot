@@ -182,7 +182,11 @@ for (const btn of document.querySelectorAll('button.range-delete')) {
             });
             const body = await r.json().catch(() => ({}));
             if (!r.ok) throw new Error(body.error || r.statusText);
-            location.reload();
+            if (body.ym && body.dd && body.name && (body.ym !== btn.dataset.ym || body.dd !== btn.dataset.dd || body.name !== btn.dataset.name)) {
+                location.href = `/file/${encodeURIComponent(body.ym)}/${encodeURIComponent(body.dd)}/${encodeURIComponent(body.name)}`;
+            } else {
+                location.reload();
+            }
         } catch (err) {
             alert('Erro ao apagar: ' + err.message);
             btn.textContent = original;
@@ -192,7 +196,7 @@ for (const btn of document.querySelectorAll('button.range-delete')) {
     });
 }
 
-for (const link of document.querySelectorAll('a.fetch-meta')) {
+for (const link of document.querySelectorAll('a.fetch-stockinfo')) {
     link.addEventListener('click', async (e) => {
         e.preventDefault();
         if (link.dataset.busy === '1') return;
@@ -214,7 +218,7 @@ for (const link of document.querySelectorAll('a.fetch-meta')) {
             const cb = link.parentElement.querySelector('input[type="checkbox"]');
             if (cb) cb.checked = true;
         } catch (err) {
-            alert('Erro ao buscar meta: ' + err.message);
+            alert('Erro ao buscar info: ' + err.message);
         } finally {
             link.textContent = original;
             delete link.dataset.busy;

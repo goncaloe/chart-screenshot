@@ -333,7 +333,7 @@ a#tv-attr-logo {
         if(e.altKey && e.keyCode == 83){
             e.preventDefault();
             const range = chart.timeScale().getVisibleRange();
-            fetch('/api/range', {
+            fetch('/api/print-bounds', {
                 method: 'POST',
                 headers: { 'content-type': 'application/json' },
                 body: JSON.stringify({
@@ -346,9 +346,9 @@ a#tv-attr-logo {
                 })
             }).then(async r => {
                 const body = await r.json().catch(() => ({}));
-                if (!r.ok) console.error('Erro ao guardar range:', body.error || r.statusText);
-                else console.log('Range guardado:', body.path);
-            }).catch(err => console.error('Erro ao guardar range:', err));
+                if (!r.ok) console.error('Erro ao guardar bounds:', body.error || r.statusText);
+                else console.log('Bounds saved:', body.path);
+            }).catch(err => console.error('Erro ao guardar bounds:', err));
         }
     }
 
