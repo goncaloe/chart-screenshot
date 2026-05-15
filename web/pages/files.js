@@ -19,8 +19,8 @@ function filesPage({ ym, dd, files, timeframe }) {
             <td data-fmt-ts="${f.lastTs ?? ''}">${f.lastTs ?? '-'}</td>
             <td>${fmtSize(f.size)}</td>
             <td class="svg-cell" data-tf="${escapeHtml(f.timeframe)}" data-candles='${attr(f.candles)}'></td>
-            <td style="text-align: center;"><input type="checkbox" disabled${f.hasRange ? ' checked' : ''}></td>
-            <td style="text-align: center;"><input type="checkbox" disabled${f.hasMeta ? ' checked' : ''}><a href="#" class="fetch-stockinfo" data-ym="${escapeHtml(ym)}" data-day="${escapeHtml(dd)}" data-filename="${escapeHtml(f.name)}">↓</a></td>
+            <td style="text-align: center;"><input type="checkbox" disabled${f.hasPrint ? ' checked' : ''}></td>
+            <td style="text-align: center;"><input type="checkbox" disabled${f.hasInfo ? ' checked' : ''}><a href="#" class="fetch-stockinfo" data-ym="${escapeHtml(ym)}" data-day="${escapeHtml(dd)}" data-filename="${escapeHtml(f.name)}">↓</a></td>
             <td style="text-align: right;"><a href="${chartHref}">chart</a> | <a href="${lightweightHref}">lightweight</a></td>
         </tr>`;
     }).join('');

@@ -113,9 +113,13 @@ function listFiles(ym, dayFilter) {
             });
         }
     }
-    out.sort((a, b) => (a.lastTs ?? -Infinity) - (b.lastTs ?? -Infinity));
+    out.sort((a, b) => {
+        const d = (a.lastTs ?? -Infinity) - (b.lastTs ?? -Infinity);
+        return d !== 0 ? d : a.name.localeCompare(b.name);
+    });
     return out;
 }
+
 
 function loadFile(ym, dd, name) {
     const meta = parseFileName(name);

@@ -10,10 +10,10 @@ function readStockinfos(ym, day) {
     if (!Array.isArray(list)) return new Map();
     return new Map(list.map(r => {
         return [r.filename, {
-            hasRange1m: (r.hasOwnProperty('rangestart_1m')),
-            hasRange5m: (r.hasOwnProperty('rangestart_5m')),
-            hasRange1d: (r.hasOwnProperty('rangestart_1d')),
-            hasMeta: (r.hasOwnProperty('shs_float') || r.hasOwnProperty('cps') || r.hasOwnProperty('cash'))
+            hasPrint1m: (r.hasOwnProperty('rangestart_1m')),
+            hasPrint5m: (r.hasOwnProperty('rangestart_5m')),
+            hasPrint1d: (r.hasOwnProperty('rangestart_1d')),
+            hasInfo: (r.hasOwnProperty('shs_float') || r.hasOwnProperty('cps') || r.hasOwnProperty('cash'))
         }]
     }));
 }
@@ -44,8 +44,8 @@ function getFiles(ym, dd, timeframe) {
             firstTs: f.firstTs,
             lastTs: f.lastTs,
             candles: f.candles,
-            hasRange: stockinfo.get(f.name)?.['hasRange' + f.timeframe] || false,
-            hasMeta: stockinfo.get(f.name)?.hasMeta || false
+            hasPrint: stockinfo.get(f.name)?.['hasPrint' + f.timeframe] || false,
+            hasInfo: stockinfo.get(f.name)?.hasInfo || false
         }));
     return { ym, dd, files, timeframe: selectedTf };
 }
