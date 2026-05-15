@@ -43,17 +43,6 @@ a#tv-attr-logo {
 <script>
     const payload = __PAYLOAD__;
     
-    // Função para formatar volume com notação abreviada
-    function formatVolume(value, decimals = 0) {
-        if (value >= 1e9) return (value / 1e9).toFixed(decimals) + 'B';
-        if (value >= 1e6) return (value / 1e6).toFixed(decimals) + 'M';
-        if (value >= 1e3) return (value / 1e3).toFixed(decimals) + 'K';
-        return value.toString();
-    }
-    
-    // Calcular volume máximo
-    const maxVolume = Math.max(...payload.volume.map(v => v.value));
-    const volumeLabel = formatVolume(maxVolume, 0);
     const isDaily = (payload.candles[1].time - payload.candles[0].time) >= 86400;
     
     const chart = LightweightCharts.createChart(document.getElementById('chart'), {
@@ -102,7 +91,6 @@ a#tv-attr-logo {
     });
 
     const volumeSeries = chart.addSeries(LightweightCharts.HistogramSeries, {
-        priceFormat: { type: 'volume' },
         priceScaleId: 'volScale',
         priceLineVisible: false, 
         lastValueVisible: false,
@@ -269,8 +257,30 @@ a#tv-attr-logo {
         });
     }
 
+    let volumeLabelEl;
+    function formatVolume(value, decimals) { 
+        if (value >= 1e9) return (value / 1e9).toFixed(decimals) + 'B';
+        if (value >= 1e6) return (value / 1e6).toFixed(decimals) + 'M';
+        if (value >= 1e3) return (value / 1e3).toFixed(decimals) + 'K';
+        return value.toString();
+    }
+    function updateVolumeLabel() {
+        if (!volumeLabelEl) return;
+        const range = chart.timeScale().getVisibleLogicalRange();
+        if (!range) return;
+        const from = Math.max(0, Math.floor(range.from));
+        const to = Math.min(payload.volume.length - 1, Math.ceil(range.to));
+        let max = 0;
+        for (let i = from; i <= to; i++) {
+            const v = payload.volume[i];
+            if (v && v.value > max) max = v.value;
+        }
+        volumeLabelEl.textContent = formatVolume(max, 1);
+    }
+
     chart.timeScale().subscribeVisibleLogicalRangeChange(() => {
         drawVerticalLines();
+        updateVolumeLabel();
     });
 
 
@@ -318,10 +328,15 @@ a#tv-attr-logo {
 
         resizeCanvas();
 
-        // usar chart.timeScale().subscribeVisibleLogicalRangeChange
         const divVolRgt = document.querySelector('.tv-lightweight-charts > table > tr:nth-of-type(3) > td:nth-of-type(3) > div');
-        divVolRgt.insertAdjacentHTML('beforeend', '<span style="position: absolute; left: 8px; top: 2px; background: rgba(0, 0, 0, 0.7); color: #cfcfcf; font-size: 12px; font-family: monospace; z-index: 100;">' + volumeLabel + '</span>');
-        
+        if (divVolRgt) {
+            volumeLabelEl = document.createElement('span');
+            volumeLabelEl.style.cssText = 'position: absolute; left: 9px; top: 2px; color: #cfcfcf; font-size: 12px; font-family: Arial; z-index: 100; pointer-events: none;';
+            divVolRgt.appendChild(volumeLabelEl);
+            updateVolumeLabel();
+        }
+
+
         if(payload.symbol) {
             let sLabel = payload.symbol;
             if(payload.timeframe) sLabel += ' | ' + payload.timeframe;
