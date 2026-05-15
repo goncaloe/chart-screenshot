@@ -92,13 +92,19 @@ for (const slider of document.querySelectorAll('.range-slider')) {
     const invLeft = slider.querySelector('.inverse-left');
     const invRight = slider.querySelector('.inverse-right');
     const thumbs = slider.querySelectorAll('.thumb');
-    const firstTs = +slider.dataset.firstts;
-    const lastTs = +slider.dataset.lastts;
+    const svgFull = slider.parentElement.querySelector('.svg-full') || document.querySelector('.svg-full');
+    const candles = svgFull ? JSON.parse(svgFull.dataset.candles || '[]') : [];
+    const timestamps = candles.map(c => c[0]);
     const parent = slider.parentElement;
     const fromLabel = parent.querySelector('[data-role="from-label"]');
     const toLabel = parent.querySelector('[data-role="to-label"]');
 
-    const tsFor = v => Math.round(firstTs + (lastTs - firstTs) * (v / 1000));
+    const tsFor = v => {
+        if (!timestamps.length) return 0;
+        const last = timestamps.length - 1;
+        const idx = Math.max(0, Math.min(last, Math.round((v / 1000) * last)));
+        return timestamps[idx];
+    };
 
     function render() {
         const from = +fromInput.value;
