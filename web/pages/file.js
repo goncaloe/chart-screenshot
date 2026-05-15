@@ -21,6 +21,7 @@ function filePage(f) {
             <a class="btn" href="/lightweight/${encodeURIComponent(f.ym)}/${encodeURIComponent(f.dd)}/${encodeURIComponent(f.name)}">Lightweight</a>
             <a class="btn secondary" href="${importHref}">Import more</a>
             ${f.timeframe === '1m' ? `<button class="btn secondary convert-to-5m" type="button" data-ym="${escapeHtml(f.ym)}" data-dd="${escapeHtml(f.dd)}" data-name="${escapeHtml(f.name)}">Convert to 5m</button>` : ''}
+            <button class="btn delete-chart" type="button" data-ym="${escapeHtml(f.ym)}" data-dd="${escapeHtml(f.dd)}" data-name="${escapeHtml(f.name)}">Delete Chart</button>
         </div>
         <p class="muted">
             ${f.count} candles

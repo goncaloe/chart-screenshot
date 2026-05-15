@@ -1,3 +1,4 @@
+const fs = require('fs');
 const path = require('path');
 const store = require('../../core/store');
 
@@ -42,4 +43,19 @@ async function postDeleteRange(req, res) {
     }
 }
 
-module.exports = { getFile, postDeleteRange };
+async function postDeleteFile(req, res) {
+    try {
+        const { ym, dd, name } = req.body || {};
+        if (!/^\d{4}-\d{2}$/.test(ym || '')) return res.status(400).json({ error: 'invalid ym' });
+        if (!/^\d{2}$/.test(dd || '')) return res.status(400).json({ error: 'invalid dd' });
+        if (!store.parseFileName(name || '')) return res.status(400).json({ error: 'invalid filename' });
+        const abs = path.join(store.DATA_DIR, ym, dd, name);
+        if (!fs.existsSync(abs)) return res.status(404).json({ error: 'file not found' });
+        fs.unlinkSync(abs);
+        res.json({ ok: true, ym, dd });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+}
+
+module.exports = { getFile, postDeleteRange, postDeleteFile };

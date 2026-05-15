@@ -130,6 +130,32 @@ for (const slider of document.querySelectorAll('.range-slider')) {
     render();
 }
 
+for (const btn of document.querySelectorAll('button.delete-chart')) {
+    btn.addEventListener('click', async () => {
+        if (btn.dataset.busy === '1') return;
+        if (!confirm(`Delete ${btn.dataset.name}? This cannot be undone.`)) return;
+        btn.dataset.busy = '1';
+        const original = btn.textContent;
+        btn.textContent = 'Deleting…';
+        btn.disabled = true;
+        try {
+            const r = await fetch('/api/delete-file', {
+                method: 'POST',
+                headers: { 'content-type': 'application/json' },
+                body: JSON.stringify({ ym: btn.dataset.ym, dd: btn.dataset.dd, name: btn.dataset.name })
+            });
+            const body = await r.json().catch(() => ({}));
+            if (!r.ok) throw new Error(body.error || r.statusText);
+            location.href = `/folder/${encodeURIComponent(body.ym)}/${encodeURIComponent(body.dd)}`;
+        } catch (err) {
+            alert('Erro ao apagar: ' + err.message);
+            btn.textContent = original;
+            btn.disabled = false;
+            delete btn.dataset.busy;
+        }
+    });
+}
+
 for (const btn of document.querySelectorAll('button.range-delete')) {
     btn.addEventListener('click', async () => {
         if (btn.dataset.busy === '1') return;
