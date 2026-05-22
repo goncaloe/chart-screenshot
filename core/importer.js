@@ -103,12 +103,19 @@ async function importRange({ symbol, timeframe, fromMs, toMs }) {
     const ym = market.ymOfMs(toMs);
     const existingAbs = store.findExistingFile(symbol, tf, ym);
     const existing = existingAbs ? store.readCandles(existingAbs) : [];
-    const { merged, added, replaced } = store.mergeCandles(existing, filtered);
+
+    // Only merge into the existing file when its last candle is within 4 days
+    // of the start of this range; otherwise keep the data separate.
+    const lastExistingSec = existing.length ? existing[existing.length - 1][0] : null;
+    const shouldMerge = lastExistingSec !== null && (fromSec - lastExistingSec) <= 4 * 86400;
+    const base = shouldMerge ? existing : [];
+
+    const { merged, added, replaced } = store.mergeCandles(base, filtered);
     if (merged.length === 0) {
         return { path: existingAbs, fetched: buffer.length, kept: 0, added: 0, replaced: 0, total: 0 };
     }
     const newAbs = store.pathFor(symbol, tf, merged);
-    if (existingAbs && existingAbs !== newAbs) fs.unlinkSync(existingAbs);
+    if (shouldMerge && existingAbs && existingAbs !== newAbs) fs.unlinkSync(existingAbs);
     store.writeCandlesAtomic(newAbs, merged);
 
     return {
