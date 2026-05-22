@@ -14,6 +14,8 @@ function die(msg) {
 
 function pad(n) { return String(n).padStart(2, '0'); }
 
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
 function listTargets(path) {
     const m1 = path.match(/^(\d{4}-\d{2})$/);
     const m2 = path.match(/^(\d{4}-\d{2})\/(\d{2})$/);
@@ -64,7 +66,9 @@ async function main() {
     console.log(`Found ${targets.length} (symbol, day) target(s).`);
 
     let ok = 0, fail = 0;
-    for (const t of targets) {
+    for (let i = 0; i < targets.length; i++) {
+        const t = targets[i];
+        if (i > 0) await sleep(2000);
         const [yy, mm] = t.ym.split('-').map(Number);
         const endStr = `${yy}-${pad(mm)}-${t.dd} 20:00`;
         const startUtc = new Date(Date.UTC(yy, mm - 1, Number(t.dd) - DAYS_BACK));
