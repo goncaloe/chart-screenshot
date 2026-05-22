@@ -1,9 +1,14 @@
 const { layout, escapeHtml, attr } = require('../layout');
 
-function fmtSize(n) {
-    if (n < 1024) return n + ' B';
-    if (n < 1024 * 1024) return (n / 1024).toFixed(1) + ' KB';
-    return (n / 1024 / 1024).toFixed(2) + ' MB';
+function fmtChange(candles) {
+    if (!Array.isArray(candles) || candles.length === 0) return '-';
+    let min = Infinity, max = -Infinity;
+    for (const c of candles) {
+        if (c[3] < min) min = c[3];
+        if (c[2] > max) max = c[2];
+    }
+    if (!Number.isFinite(min) || !Number.isFinite(max) || min <= 0) return '-';
+    return ((max - min) / min * 100).toFixed(2) + '%';
 }
 
 function filesPage({ ym, dd, files, timeframe }) {
@@ -17,7 +22,7 @@ function filesPage({ ym, dd, files, timeframe }) {
             <td>${f.count}</td>
             <td data-fmt-ts="${f.firstTs ?? ''}">${f.firstTs ?? '-'}</td>
             <td data-fmt-ts="${f.lastTs ?? ''}">${f.lastTs ?? '-'}</td>
-            <td>${fmtSize(f.size)}</td>
+            <td>${fmtChange(f.candles)}</td>
             <td class="svg-cell" data-tf="${escapeHtml(f.timeframe)}" data-candles='${attr(f.candles)}'></td>
             <td style="text-align: center;"><input type="checkbox" disabled${f.hasPrint ? ' checked' : ''}></td>
             <td style="text-align: center;"><input type="checkbox" disabled${f.hasInfo ? ' checked' : ''}><a href="#" class="fetch-stockinfo" data-ym="${escapeHtml(ym)}" data-day="${escapeHtml(dd)}" data-filename="${escapeHtml(f.name)}">↓</a></td>
@@ -49,7 +54,7 @@ function filesPage({ ym, dd, files, timeframe }) {
             <thead><tr>
                 <th>Symbol</th><th>TF</th><th>Count</th>
                 <th>First (NY)</th><th>Last (NY)</th>
-                <th>Size</th>
+                <th>Change</th>
                 <th style="text-align: center;">Candles</th>
                 <th style="text-align: center;">Print</th>
                 <th style="text-align: center;">Stock Info</th>
