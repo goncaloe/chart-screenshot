@@ -8,7 +8,11 @@ function fmtChange(candles) {
         if (c[2] > max) max = c[2];
     }
     if (!Number.isFinite(min) || !Number.isFinite(max) || min <= 0) return '-';
-    return ((max - min) / min * 100).toFixed(2) + '%';
+    const pct = (max - min) / min * 100;
+    // 0% -> cold (blue, hue 240), 500%+ -> warm (red, hue 0)
+    const ratio = Math.min(Math.max(pct, 0), 500) / 500;
+    const hue = 240 * (1 - ratio);
+    return `<span style="color: hsl(${hue.toFixed(0)}, 75%, 50%)">${pct.toFixed(2)}%</span>`;
 }
 
 function filesPage({ ym, dd, files, timeframe }) {
