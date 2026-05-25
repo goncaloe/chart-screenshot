@@ -15,11 +15,22 @@ function fmtChange(candles) {
     return `<span style="color: hsl(${hue.toFixed(0)}, 75%, 50%)">${pct.toFixed(2)}%</span>`;
 }
 
+function riskBadge(level) {
+    if (!level) return '';
+    const colors = { low: '#2e7d32', medium: '#f9a825', high: '#ef6c00', critical: '#c62828' };
+    const color = colors[level] || '#666';
+    return `<span class="risk-badge" title="dilution risk" style="display:inline-block;margin-left:6px;padding:0 6px;border-radius:3px;font-size:11px;color:#fff;background:${color}">${escapeHtml(level)}</span>`;
+}
+
 function filesPage({ ym, dd, files, timeframe }) {
     const rows = files.map(f => {
         const link = `/file/${encodeURIComponent(ym)}/${encodeURIComponent(f.dd)}/${encodeURIComponent(f.name)}`;
         const chartHref = `/chart/${encodeURIComponent(ym)}/${encodeURIComponent(f.dd)}/${encodeURIComponent(f.name)}`;
         const lightweightHref = `/lightweight/${encodeURIComponent(ym)}/${encodeURIComponent(f.dd)}/${encodeURIComponent(f.name)}`;
+        const showDilution = f.timeframe === '1m' || f.timeframe === '5m';
+        const dilutionCell = showDilution
+            ? `<input type="checkbox" disabled${f.hasInfo ? ' checked' : ''}><a href="#" class="fetch-stockinfo" data-ym="${escapeHtml(ym)}" data-day="${escapeHtml(dd)}" data-filename="${escapeHtml(f.name)}">↓</a>${riskBadge(f.riskLevel)}`
+            : '';
         return `<tr>
             <td><a href="${link}">${escapeHtml(f.symbol)}</a></td>
             <td>${escapeHtml(f.timeframe)}</td>
@@ -29,7 +40,7 @@ function filesPage({ ym, dd, files, timeframe }) {
             <td>${fmtChange(f.candles)}</td>
             <td class="svg-cell" data-tf="${escapeHtml(f.timeframe)}" data-candles='${attr(f.candles)}'></td>
             <td style="text-align: center;"><input type="checkbox" disabled${f.hasPrint ? ' checked' : ''}></td>
-            <td style="text-align: center;"><input type="checkbox" disabled${f.hasInfo ? ' checked' : ''}><a href="#" class="fetch-stockinfo" data-ym="${escapeHtml(ym)}" data-day="${escapeHtml(dd)}" data-filename="${escapeHtml(f.name)}">↓</a></td>
+            <td style="text-align: center;">${dilutionCell}</td>
             <td style="text-align: right;"><a href="${chartHref}">chart</a> | <a href="${lightweightHref}">lightweight</a></td>
         </tr>`;
     }).join('');
@@ -61,7 +72,7 @@ function filesPage({ ym, dd, files, timeframe }) {
                 <th>Change</th>
                 <th style="text-align: center;">Candles</th>
                 <th style="text-align: center;">Print</th>
-                <th style="text-align: center;">Stock Info</th>
+                <th style="text-align: center;">Dilution</th>
                 <th></th>
             </tr></thead>
             <tbody>${rows}</tbody>

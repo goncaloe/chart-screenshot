@@ -13,7 +13,8 @@ function readStockinfos(ym, day) {
             hasPrint1m: (r.hasOwnProperty('rangestart_1m')),
             hasPrint5m: (r.hasOwnProperty('rangestart_5m')),
             hasPrint1d: (r.hasOwnProperty('rangestart_1d')),
-            hasInfo: (r.hasOwnProperty('shs_float') || r.hasOwnProperty('cps') || r.hasOwnProperty('cash'))
+            hasInfo: (r.hasOwnProperty('shs_float') || r.hasOwnProperty('cps') || r.hasOwnProperty('cash') || r.hasOwnProperty('dilution_risk')),
+            riskLevel: (r.dilution_risk && r.dilution_risk.level) || null
         }]
     }));
 }
@@ -45,7 +46,8 @@ function getFiles(ym, dd, timeframe) {
             lastTs: f.lastTs,
             candles: f.candles,
             hasPrint: stockinfo.get(f.name)?.['hasPrint' + f.timeframe] || false,
-            hasInfo: stockinfo.get(f.name)?.hasInfo || false
+            hasInfo: stockinfo.get(f.name)?.hasInfo || false,
+            riskLevel: stockinfo.get(f.name)?.riskLevel || null
         }));
     return { ym, dd, files, timeframe: selectedTf };
 }

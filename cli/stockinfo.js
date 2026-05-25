@@ -19,6 +19,13 @@ function dataToText(data){
     if (data.country) {
         text.push(data.country);
     }
+    if (data.dilution_risk) {
+        const r = data.dilution_risk;
+        text.push(`Dilution Risk: ${r.level} (${r.score})`);
+        if (r.factors && r.factors.length) {
+            text.push("  " + r.factors.join("; "));
+        }
+    }
     return text.join("\n");
 }
 

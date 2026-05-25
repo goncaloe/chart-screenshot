@@ -217,6 +217,20 @@ for (const link of document.querySelectorAll('a.fetch-stockinfo')) {
             if (!r.ok) throw new Error(body.error || r.statusText);
             const cb = link.parentElement.querySelector('input[type="checkbox"]');
             if (cb) cb.checked = true;
+            const level = body.entry && body.entry.dilution_risk && body.entry.dilution_risk.level;
+            if (level) {
+                const colors = { low: '#2e7d32', medium: '#f9a825', high: '#ef6c00', critical: '#c62828' };
+                let badge = link.parentElement.querySelector('.risk-badge');
+                if (!badge) {
+                    badge = document.createElement('span');
+                    badge.className = 'risk-badge';
+                    badge.title = 'dilution risk';
+                    badge.style.cssText = 'display:inline-block;margin-left:6px;padding:0 6px;border-radius:3px;font-size:11px;color:#fff';
+                    link.parentElement.appendChild(badge);
+                }
+                badge.textContent = level;
+                badge.style.background = colors[level] || '#666';
+            }
         } catch (err) {
             alert('Erro ao buscar info: ' + err.message);
         } finally {

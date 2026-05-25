@@ -34,8 +34,14 @@ async function postFetchInfo(req, res) {
         }
 
         const idx = list.findIndex(r => r && r.filename === filename);
-        if (idx >= 0) list[idx] = { ...dinfo, ...list[idx] };
-        else list.push({ filename, ...dinfo });
+        if (idx >= 0) {
+            // Existing fields win (keeps manual edits stable), except dilution_risk,
+            // which is derived and should always reflect the latest fetch.
+            list[idx] = { ...dinfo, ...list[idx] };
+            if (dinfo.dilution_risk) list[idx].dilution_risk = dinfo.dilution_risk;
+        } else {
+            list.push({ filename, ...dinfo });
+        }
 
         const tmp = filePath + '.tmp';
         fs.writeFileSync(tmp, JSON.stringify(list, null, 2));
