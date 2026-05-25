@@ -2,13 +2,15 @@ const { layout, escapeHtml, attr } = require('../layout');
 
 function fmtChange(candles) {
     if (!Array.isArray(candles) || candles.length === 0) return '-';
-    let min = Infinity, max = -Infinity;
+    let minLow = Infinity, pct = 0;
     for (const c of candles) {
-        if (c[3] < min) min = c[3];
-        if (c[2] > max) max = c[2];
+        if (c[3] < minLow) minLow = c[3];
+        if (minLow > 0) {
+            const rise = (c[2] - minLow) / minLow * 100;
+            if (rise > pct) pct = rise;
+        }
     }
-    if (!Number.isFinite(min) || !Number.isFinite(max) || min <= 0) return '-';
-    const pct = (max - min) / min * 100;
+    if (!Number.isFinite(pct)) return '-';
     // 0% -> cold (blue, hue 240), 500%+ -> warm (red, hue 0)
     const ratio = Math.min(Math.max(pct, 0), 500) / 500;
     const hue = 240 * (1 - ratio);
