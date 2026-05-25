@@ -11,7 +11,7 @@ function chartPage(f) {
             <a href="/folder/${escapeHtml(f.ym)}/${escapeHtml(f.dd)}">${escapeHtml(f.dd)}</a> /
             <a href="/file/${escapeHtml(f.ym)}/${escapeHtml(f.dd)}/${escapeHtml(f.name)}">${escapeHtml(f.name)}</a> / Chart
         </div>
-        <div id="chart" data-payload='${attr(payload)}'></div>`;
+        <div id="highstock" data-payload='${attr(payload)}'></div>`;
     return layout({
         title: `${f.symbol} ${f.timeframe} chart`,
         body,

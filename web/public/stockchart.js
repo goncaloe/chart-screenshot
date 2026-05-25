@@ -1,4 +1,4 @@
-const el = document.getElementById('chart');
+const el = document.getElementById('highstock');
 const payload = JSON.parse(el.dataset.payload);
 const Highcharts = window.Highcharts;
 Highcharts.setOptions({ time: { timezone: 'America/New_York' } });
@@ -53,7 +53,7 @@ for (const row of payload.ohlc) {
     }
 }
 
-Highcharts.stockChart('chart', {
+Highcharts.stockChart('highstock', {
     rangeSelector: { 
         buttons: [
             {

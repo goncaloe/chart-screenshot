@@ -45,7 +45,7 @@ form.import .full { grid-column: 1 / -1; }
 .range-info { margin: 10px 0; font-size: 0.9rem; }
 .error { color: #b91c1c; background: #fef2f2; padding: 0.5rem 0.75rem; border-radius: 4px; }
 .ok { color: #065f46; background: #ecfdf5; padding: 0.5rem 0.75rem; border-radius: 4px; }
-#chart { height: 600px; }
+#highstock { height: 600px; }
 .folder-tree .folder-toggle { cursor: pointer; user-select: none; }
 .folder-tree .folder-toggle .caret { display: inline-block; width: 1rem; color: #6b7280; }
 .folder-tree .day-row td { padding-left: 1.25rem; }
