@@ -16,7 +16,7 @@ html, body {
 }
 #chart{
     width: 100vw;
-    height: 100vh;
+    height: calc(100vh - 14px);
 }
 a#tv-attr-logo {
     display: none !important;
@@ -45,7 +45,8 @@ a#tv-attr-logo {
     
     const isDaily = (payload.candles[1].time - payload.candles[0].time) >= 86400;
     
-    const chart = LightweightCharts.createChart(document.getElementById('chart'), {
+    const container = document.getElementById('chart');
+    const chart = LightweightCharts.createChart(container, {
         //autoSize: true,
         width: document.body.clientWidth - 2,
         height: document.body.clientHeight - 13,
@@ -129,132 +130,76 @@ a#tv-attr-logo {
     });
 
 
-    // Encontrar transições de dia
-    const dayTransitionTimes = [];
-    const dayOpenTimes = [];
-    const dayCloseTimes = [];
+    class VerticalLinesPaneRenderer {
+        constructor(items) { this._items = items; }
+        draw(target) {
+            target.useMediaCoordinateSpace(scope => {
+                const ctx = scope.context;
+                ctx.save();
+                ctx.imageSmoothingEnabled = false;
+                ctx.lineWidth = 1;
+                ctx.setLineDash([6, 3]);
+                for (const it of this._items) {
+                    const x = Math.round(it.x) - 0.5;
+                    ctx.strokeStyle = it.color;
+                    ctx.beginPath();
+                    ctx.moveTo(x, 0);
+                    ctx.lineTo(x, scope.mediaSize.height);
+                    ctx.stroke();
+                }
+                ctx.restore();
+            });
+        }
+    }
+
+    class VerticalLinesPaneView {
+        constructor(source) { this._source = source; this._items = []; }
+        update() {
+            const chart = this._source._chart;
+            if (!chart) { this._items = []; return; }
+            const ts = chart.timeScale();
+            this._items = this._source._lines.map(l => {
+                const x = ts.timeToCoordinate(l.time);
+                const prevX = ts.timeToCoordinate(l.prevTime);
+                if (x === null || prevX === null) return null;
+                return { x: (prevX + x + 1.7) / 2, color: l.color };
+            }).filter(Boolean);
+        }
+        renderer() { return new VerticalLinesPaneRenderer(this._items); }
+    }
+
+    class VerticalLinesPrimitive {
+        constructor(lines) { this._lines = lines; this._chart = null; this._view = new VerticalLinesPaneView(this); }
+        attached(param) { this._chart = param.chart; }
+        detached() { this._chart = null; }
+        updateAllViews() { this._view.update(); }
+        paneViews() { return [this._view]; }
+    }
+
+    // Linhas verticais: transições de dia (cinza), open 10:30 (amarelo), close 17:00 (azul).
+    // prevTime é a vela imediatamente anterior, para posicionar a linha entre velas.
+    const verticalLines = [];
     if(payload.candles.length > 1 && !isDaily){
         for (let i = 1; i < payload.candles.length; i++) {
-            const prevDate = new Date(payload.candles[i - 1].time * 1000);
-            const currDate = new Date(payload.candles[i].time * 1000);
-            
+            const prev = payload.candles[i - 1];
+            const curr = payload.candles[i];
+            const prevDate = new Date(prev.time * 1000);
+            const currDate = new Date(curr.time * 1000);
+
             if (prevDate.toDateString() !== currDate.toDateString()) {
-                dayTransitionTimes.push(payload.candles[i].time);
+                verticalLines.push({ time: curr.time, prevTime: prev.time, color: '#7F7F7F' });
             }
             else if (currDate.getHours() === 10 && currDate.getMinutes() === 30) {
-                dayOpenTimes.push(payload.candles[i].time);
+                verticalLines.push({ time: curr.time, prevTime: prev.time, color: '#DDB800' });
             }
             else if (currDate.getHours() === 17 && currDate.getMinutes() === 0) {
-                dayCloseTimes.push(payload.candles[i].time);
+                verticalLines.push({ time: curr.time, prevTime: prev.time, color: '#0026FF' });
             }
         }
     }
 
-    function createVerticalLineCanvas(div) {
-        const canvas = document.createElement('canvas');
-        canvas.style.position = 'absolute';
-        canvas.style.top = '0';
-        canvas.style.left = '0';
-        canvas.style.zIndex = '6';
-        canvas.style.pointerEvents = 'none';
-        div.appendChild(canvas);
-        return canvas;
-    }
-
-    let canvas;
-    let ctx;
-    let canvas2;
-    let ctx2;
-
-    let canvasOpen;
-    let ctxOpen;
-    let canvasOpen2;
-    let ctxOpen2;    
-
-    let canvasClose;
-    let ctxClose
-    let ctxClose2;
-    let canvasClose2;
-
-    function resizeCanvas() {
-        if (!canvas) return;
-        canvas.width = canvas.parentElement.clientWidth;
-        canvas.height = canvas.parentElement.clientHeight;
-        canvas2.width = canvas2.parentElement.clientWidth;
-        canvas2.height = canvas2.parentElement.clientHeight;
-
-        canvasOpen.width = canvasOpen.parentElement.clientWidth;
-        canvasOpen.height = canvasOpen.parentElement.clientHeight;
-        canvasOpen2.width = canvasOpen2.parentElement.clientWidth;
-        canvasOpen2.height = canvasOpen2.parentElement.clientHeight;
-
-        canvasClose.width = canvasClose.parentElement.clientWidth;
-        canvasClose.height = canvasClose.parentElement.clientHeight;
-        canvasClose2.width = canvasClose2.parentElement.clientWidth;
-        canvasClose2.height = canvasClose2.parentElement.clientHeight
-
-        drawVerticalLines();
-    }
-    
-    function drawVerticalLines() {
-        if (!canvas) return;
-
-        const timeScale = chart.timeScale();
-        
-        const getLineXBetweenCandles = (time) => {
-            const x = timeScale.timeToCoordinate(time);
-            const candleIndex = payload.candles.findIndex(c => c.time === time);
-            
-            if (candleIndex > 0) {
-                const prevTime = payload.candles[candleIndex - 1].time;
-                const prevX = timeScale.timeToCoordinate(prevTime);
-                const diff = prevX - x;
-                return (prevX + x + 1.7) / 2;
-            }
-            return x;
-        };
-        
-        const drawLine = (time, color, ct1, ct2, cv1, cv2) => {
-            const x = getLineXBetweenCandles(time);
-            ct1.strokeStyle = color;
-            ct1.lineWidth = 1;
-            ct1.setLineDash([6, 3]);
-            ct1.beginPath();
-            ct1.moveTo(Math.round(x) - 0.5, 0);
-            ct1.lineTo(Math.round(x) - 0.5, cv1.height);
-            ct1.stroke();
-            ct2.strokeStyle = color;
-            ct2.lineWidth = 1;
-            ct2.setLineDash([6, 3]);
-            ct2.beginPath();
-            ct2.moveTo(Math.round(x) - 0.5, 0);
-            ct2.lineTo(Math.round(x) - 0.5, cv2.height);
-            ct2.stroke();
-        };
-
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.imageSmoothingEnabled = false;
-        ctx2.clearRect(0, 0, canvas2.width, canvas2.height);
-        ctx2.imageSmoothingEnabled = false;
-        dayTransitionTimes.forEach(time => {
-            drawLine(time, '#7F7F7F', ctx, ctx2, canvas, canvas2);
-        });
-
-        ctxOpen.clearRect(0, 0, canvasOpen.width, canvasOpen.height);
-        ctxOpen.imageSmoothingEnabled = false;
-        ctxOpen2.clearRect(0, 0, canvasOpen2.width, canvasOpen2.height);
-        ctxOpen2.imageSmoothingEnabled = false;
-        dayOpenTimes.forEach(time => {
-            drawLine(time, '#DDB800', ctxOpen, ctxOpen2, canvasOpen, canvasOpen2);
-        });
-
-        ctxClose.clearRect(0, 0, canvasClose.width, canvasClose.height);
-        ctxClose.imageSmoothingEnabled = false;
-        ctxClose2.clearRect(0, 0, canvasClose2.width, canvasClose2.height);
-        ctxClose2.imageSmoothingEnabled = false;
-        dayCloseTimes.forEach(time => {
-            drawLine(time, '#0026FF', ctxClose, ctxClose2, canvasClose, canvasClose2);
-        });
+    if (verticalLines.length) {
+        chart.panes().forEach(p => p.attachPrimitive(new VerticalLinesPrimitive(verticalLines)));
     }
 
     let volumeLabelEl;
@@ -279,7 +224,6 @@ a#tv-attr-logo {
     }
 
     chart.timeScale().subscribeVisibleLogicalRangeChange(() => {
-        drawVerticalLines();
         updateVolumeLabel();
     });
 
@@ -291,42 +235,18 @@ a#tv-attr-logo {
     //    maxBarSpacing: 10,
     //});
 
-    window.addEventListener('resize', () => {
-        chart.applyOptions({
-            width: window.innerWidth,
-            height: window.innerHeight
-        });
-        if(canvas){
-            resizeCanvas();
-        }
+    // Handle resize
+    const resizeObserver = new ResizeObserver(() => {
+      const { width, height } = container.getBoundingClientRect();
+      chart.resize(width, height);
     });
+    resizeObserver.observe(container);
 
     requestAnimationFrame(() => {
         const tr = document.querySelector('.tv-lightweight-charts > table > tr:nth-of-type(2) > td[colspan="3"]').parentElement;
         tr.setAttribute("style", "height: 5px !important;");
         
         const divCanvas = document.querySelector('.tv-lightweight-charts > table > tr:first-child > td:nth-of-type(2) > div');
-        const chartCanvas = divCanvas.querySelector('canvas:nth-of-type(1)');
-
-        const divVolume = document.querySelector('.tv-lightweight-charts > table > tr:nth-of-type(3) > td:nth-of-type(2) > div');
-        const volumeCanvas = divVolume.querySelector('canvas:nth-of-type(1)');
-    
-        canvas = createVerticalLineCanvas(divCanvas);
-        ctx = canvas.getContext('2d');
-        canvas2 = createVerticalLineCanvas(divVolume);
-        ctx2 = canvas2.getContext('2d');
-
-        canvasOpen = createVerticalLineCanvas(divCanvas);
-        ctxOpen = canvasOpen.getContext('2d');
-        canvasOpen2 = createVerticalLineCanvas(divVolume);
-        ctxOpen2 = canvasOpen2.getContext('2d');
-
-        canvasClose = createVerticalLineCanvas(divCanvas);
-        ctxClose = canvasClose.getContext('2d');
-        canvasClose2 = createVerticalLineCanvas(divVolume);
-        ctxClose2 = canvasClose2.getContext('2d');
-
-        resizeCanvas();
 
         const divVolRgt = document.querySelector('.tv-lightweight-charts > table > tr:nth-of-type(3) > td:nth-of-type(3) > div');
         if (divVolRgt) {
