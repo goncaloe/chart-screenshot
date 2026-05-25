@@ -8,11 +8,25 @@ function buildSlots(candles, tf) {
     const last = candles[candles.length - 1][0];
     const slots = [];
     if (tf === '1d') {
-        for (let t = first; t <= last; t += step) {
-            const d = new Date(t * 1000);
+        // Daily timestamps sit at NY-midnight, whose UTC offset changes across
+        // DST. Walk calendar days and match by date so a DST boundary inside
+        // the range doesn't make every later day read as a gap.
+        const dayKey = ts => {
+            const d = new Date(ts * 1000);
+            return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`;
+        };
+        const tsByDay = new Map(candles.map(c => [dayKey(c[0]), c[0]]));
+        const sd = new Date(first * 1000);
+        const ed = new Date(last * 1000);
+        let cur = Date.UTC(sd.getUTCFullYear(), sd.getUTCMonth(), sd.getUTCDate());
+        const stop = Date.UTC(ed.getUTCFullYear(), ed.getUTCMonth(), ed.getUTCDate());
+        for (; cur <= stop; cur += 86400000) {
+            const d = new Date(cur);
             const wd = d.getUTCDay();
             if (wd === 0 || wd === 6) continue;
-            slots.push({ ts: t, present: have.has(t) });
+            const key = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`;
+            const ts = tsByDay.get(key);
+            slots.push({ ts: ts != null ? ts : Math.floor(cur / 1000), present: ts != null });
         }
     } else {
         for (let t = first; t <= last; t += step) {
