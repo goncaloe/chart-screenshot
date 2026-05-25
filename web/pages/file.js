@@ -1,12 +1,40 @@
 const { layout, escapeHtml, attr } = require('../layout');
+const { riskBadge, fmtChange } = require('./components');
+
+function stockInfoSection(s) {
+    if (!s) return '';
+    const stats = [];
+    if (s.shs_float != null) stats.push(['Float & OS', `${escapeHtml(s.shs_float)}M`]);
+    if (s.inst_own != null) stats.push(['Inst Own', `${escapeHtml(s.inst_own)}%`]);
+    if (s.cps != null) stats.push(['Net Cash/Sh', escapeHtml(s.cps)]);
+    if (s.cash != null) stats.push(['Cash', s.cash === 'positive' ? 'cashflow positive' : `${escapeHtml(s.cash)} months`]);
+    if (s.country != null) stats.push(['Country', escapeHtml(String(s.country).trim())]);
+
+    const statsHtml = stats.length
+        ? `<dl class="stockinfo-stats">${stats.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('')}</dl>`
+        : '';
+
+    const r = s.dilution_risk;
+    const riskHtml = r && r.level
+        ? `<p>Dilution risk: ${riskBadge(r.level)} ${r.score != null ? `<span class="muted">(score ${escapeHtml(r.score)})</span>` : ''}</p>
+           ${Array.isArray(r.factors) && r.factors.length ? `<ul class="stockinfo-factors">${r.factors.map(x => `<li>${escapeHtml(x)}</li>`).join('')}</ul>` : ''}`
+        : '';
+
+    const newsHtml = Array.isArray(s.news) && s.news.length
+        ? `<h3>News</h3>
+           <ul class="stockinfo-news">${s.news.map(n => `<li><span class="muted">${escapeHtml(n.date)}</span> — ${escapeHtml(n.title)}</li>`).join('')}</ul>`
+        : '';
+
+    if (!statsHtml && !riskHtml && !newsHtml) return '';
+    return `
+        <h2>Stock Info</h2>
+        ${statsHtml}
+        ${riskHtml}
+        ${newsHtml}`;
+}
 
 function filePage(f) {
     const importHref = `/import?ym=${encodeURIComponent(f.ym)}&symbol=${encodeURIComponent(f.symbol)}&timeframe=${encodeURIComponent(f.timeframe)}`;
-    const rangesRows = f.ranges.map((r, i) =>
-        `<tr><td>${i + 1}</td>
-         <td data-fmt-ts="${r.startTs}">${r.startTs}</td>
-         <td data-fmt-ts="${r.endTs}">${r.endTs}</td>
-         <td>${r.count}</td></tr>`).join('');
 
     const body = `
         <div class="crumbs">
@@ -26,7 +54,7 @@ function filePage(f) {
         <p class="muted">
             ${f.count} candles
             ${f.firstTs ? `· <span data-fmt-ts="${f.firstTs}">${f.firstTs}</span> → <span data-fmt-ts="${f.lastTs}">${f.lastTs}</span>` : ''}
-            · ${f.ranges.length} contiguous range(s)
+            · Change: ${fmtChange(f.candles)}
         </p>
         <div class="svg-full" data-tf="${escapeHtml(f.timeframe)}" data-candles='${attr(f.candles)}'></div>
         ${f.firstTs && f.lastTs ? `
@@ -41,16 +69,12 @@ function filePage(f) {
             <input type="range" min="0" max="1000" value="0" data-role="from">
             <input type="range" min="0" max="1000" value="1000" data-role="to">
         </div>
-        <div class="range-info muted">
+        <div class="range-info muted" style="display: inline-block;">
             <span data-role="from-label"></span> → <span data-role="to-label"></span>
         </div>
         <button class="btn range-delete" type="button" data-ym="${escapeHtml(f.ym)}" data-dd="${escapeHtml(f.dd)}" data-name="${escapeHtml(f.name)}">Delete Selection</button>
         ` : ''}
-        <h2>Ranges</h2>
-        <table>
-            <thead><tr><th>#</th><th>Start (NY)</th><th>End (NY)</th><th>Candles</th></tr></thead>
-            <tbody>${rangesRows}</tbody>
-        </table>`;
+        ${stockInfoSection(f.stockinfo)}`;
     return layout({ title: `${f.symbol} ${f.timeframe}`, body });
 }
 

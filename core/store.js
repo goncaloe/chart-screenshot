@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const { ymOfMs, ddOfMs, timeframeSeconds, isMarketOpen } = require('./market');
+const { ymOfMs, ddOfMs } = require('./market');
 
 const DATA_DIR = path.resolve(__dirname, '..', 'data');
 
@@ -129,36 +129,6 @@ function loadFile(ym, dd, name) {
     return { ...meta, ym, dd: String(dd).padStart(2, '0'), name, candles, count: candles.length, path: abs };
 }
 
-function computeRanges(candles, tf) {
-    const step = timeframeSeconds(tf);
-    const sorted = [...candles].sort((a, b) => a[0] - b[0]);
-    const ranges = [];
-    let start = null, prev = null, count = 0;
-    for (const c of sorted) {
-        const ts = c[0];
-        if (prev !== null && ts === prev) continue;
-        if (prev === null) {
-            start = ts; prev = ts; count = 1;
-            continue;
-        }
-        if (ts === nextExpected(prev, step, tf)) {
-            prev = ts; count++;
-        } else {
-            ranges.push({ startTs: start, endTs: prev, count });
-            start = ts; prev = ts; count = 1;
-        }
-    }
-    if (prev !== null) ranges.push({ startTs: start, endTs: prev, count });
-    return ranges;
-}
-
-function nextExpected(ts, step, tf) {
-    if (tf === '1d') return ts + step;
-    let cur = ts + step;
-    while (!isMarketOpen(cur)) cur += step;
-    return cur;
-}
-
 module.exports = {
     DATA_DIR,
     fileName,
@@ -172,6 +142,5 @@ module.exports = {
     listFolders,
     listDays,
     listFiles,
-    loadFile,
-    computeRanges
+    loadFile
 };

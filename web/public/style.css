@@ -50,3 +50,9 @@ form.import .full { grid-column: 1 / -1; }
 .folder-tree .folder-toggle .caret { display: inline-block; width: 1rem; color: #6b7280; }
 .folder-tree .day-row td { padding-left: 1.25rem; }
 .folder-tree .tree-indent { display: inline-block; width: 0.75rem; color: #9ca3af; font-family: ui-monospace, monospace; }
+.stockinfo-stats { display: grid; grid-template-columns: max-content 1fr; gap: 4px 16px; margin: 10px 0; max-width: 360px; }
+.stockinfo-stats dt { color: #6b7280; }
+.stockinfo-stats dd { margin: 0; font-weight: 600; }
+.stockinfo-factors { margin: 6px 0; color: #6b7280; font-size: 0.9rem; }
+.stockinfo-news { margin: 6px 0; padding-left: 1.1rem; }
+.stockinfo-news li { margin: 2px 0; }

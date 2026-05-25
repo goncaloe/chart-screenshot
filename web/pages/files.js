@@ -1,28 +1,5 @@
 const { layout, escapeHtml, attr } = require('../layout');
-
-function fmtChange(candles) {
-    if (!Array.isArray(candles) || candles.length === 0) return '-';
-    let minLow = Infinity, pct = 0;
-    for (const c of candles) {
-        if (c[3] < minLow) minLow = c[3];
-        if (minLow > 0) {
-            const rise = (c[2] - minLow) / minLow * 100;
-            if (rise > pct) pct = rise;
-        }
-    }
-    if (!Number.isFinite(pct)) return '-';
-    // 0% -> cold (blue, hue 240), 500%+ -> warm (red, hue 0)
-    const ratio = Math.min(Math.max(pct, 0), 500) / 500;
-    const hue = 240 * (1 - ratio);
-    return `<span style="color: hsl(${hue.toFixed(0)}, 75%, 50%)">${pct.toFixed(2)}%</span>`;
-}
-
-function riskBadge(level) {
-    if (!level) return '';
-    const colors = { low: '#2e7d32', medium: '#f9a825', high: '#ef6c00', critical: '#c62828' };
-    const color = colors[level] || '#666';
-    return `<span class="risk-badge" title="dilution risk" style="display:inline-block;margin-left:6px;padding:0 6px;border-radius:3px;font-size:11px;color:#fff;background:${color}">${escapeHtml(level)}</span>`;
-}
+const { riskBadge, fmtChange } = require('./components');
 
 function filesPage({ ym, dd, files, timeframe }) {
     const rows = files.map(f => {
@@ -31,7 +8,7 @@ function filesPage({ ym, dd, files, timeframe }) {
         const lightweightHref = `/lightweight/${encodeURIComponent(ym)}/${encodeURIComponent(f.dd)}/${encodeURIComponent(f.name)}`;
         const showDilution = f.timeframe === '1m' || f.timeframe === '5m';
         const dilutionCell = showDilution
-            ? `<input type="checkbox" disabled${f.hasInfo ? ' checked' : ''}><a href="#" class="fetch-stockinfo" data-ym="${escapeHtml(ym)}" data-day="${escapeHtml(dd)}" data-filename="${escapeHtml(f.name)}">↓</a>${riskBadge(f.riskLevel)}`
+            ? `<input type="checkbox" disabled${f.hasInfo ? ' checked' : ''}><a href="#" class="fetch-stockinfo" data-ym="${escapeHtml(ym)}" data-day="${escapeHtml(dd)}" data-filename="${escapeHtml(f.name)}">↓</a>${riskBadge(f.riskLevel, { marginLeft: true })}`
             : '';
         return `<tr>
             <td><a href="${link}">${escapeHtml(f.symbol)}</a></td>

@@ -2,11 +2,20 @@ const fs = require('fs');
 const path = require('path');
 const store = require('../../core/store');
 
+function readStockinfo(ym, dd, name) {
+    const abs = store.stockinfoPathFor(ym, dd);
+    if (!fs.existsSync(abs)) return null;
+    const txt = fs.readFileSync(abs, 'utf8');
+    if (!txt.trim()) return null;
+    const list = JSON.parse(txt);
+    if (!Array.isArray(list)) return null;
+    return list.find(r => r && r.filename === name) || null;
+}
+
 function getFile(ym, dd, name) {
     if (!/^\d{4}-\d{2}$/.test(ym)) throw new Error('Invalid ym');
     if (!/^\d{2}$/.test(dd)) throw new Error('Invalid dd');
     const f = store.loadFile(ym, dd, name);
-    const ranges = store.computeRanges(f.candles, f.timeframe);
     return {
         ym: f.ym,
         dd: f.dd,
@@ -16,8 +25,8 @@ function getFile(ym, dd, name) {
         count: f.count,
         firstTs: f.candles.length ? f.candles[0][0] : null,
         lastTs: f.candles.length ? f.candles[f.candles.length - 1][0] : null,
-        ranges,
-        candles: f.candles
+        candles: f.candles,
+        stockinfo: readStockinfo(ym, dd, name)
     };
 }
 
