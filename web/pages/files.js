@@ -33,7 +33,7 @@ function filesPage({ ym, dd, files, timeframe }) {
     const body = `
         <div class="crumbs">
             <a href="/">Folders</a> /
-            <a href="/folder/${encodeURIComponent(ym)}">${escapeHtml(ym)}</a> /
+            <a href="/#${encodeURIComponent(ym)}">${escapeHtml(ym)}</a> /
             ${escapeHtml(dd)}
         </div>
         <h1>${escapeHtml(ym)} / ${escapeHtml(dd)}</h1>

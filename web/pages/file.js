@@ -39,7 +39,7 @@ function filePage(f) {
     const body = `
         <div class="crumbs">
             <a href="/">Folders</a> /
-            <a href="/folder/${escapeHtml(f.ym)}">${escapeHtml(f.ym)}</a> /
+            <a href="/#${encodeURIComponent(f.ym)}">${escapeHtml(f.ym)}</a> /
             <a href="/folder/${escapeHtml(f.ym)}/${escapeHtml(f.dd)}">${escapeHtml(f.dd)}</a> /
             ${escapeHtml(f.name)}
         </div>

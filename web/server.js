@@ -8,7 +8,6 @@ const stockinfoAction = require('./actions/stockinfo');
 const convertAction = require('./actions/convert');
 
 const { foldersPage } = require('./pages/folders');
-const { daysPage } = require('./pages/days');
 const { filesPage } = require('./pages/files');
 const { filePage } = require('./pages/file');
 const { chartPage } = require('./pages/chart');
@@ -22,13 +21,9 @@ app.get('/', (req, res) => {
     res.send(foldersPage(foldersAction.getFolders()));
 });
 
-app.get('/folder/:ym', (req, res) => {
-    try {
-        res.send(daysPage(foldersAction.getDays(req.params.ym)));
-    } catch (e) {
-        res.status(400).send(`<pre>${e.message}</pre>`);
-    }
-});
+//app.get('/folder/:ym', (req, res) => {
+//    res.redirect(301, `/#${encodeURIComponent(req.params.ym)}`);
+//});
 
 app.get('/api/days/:ym', (req, res) => {
     try {

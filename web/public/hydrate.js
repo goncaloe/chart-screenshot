@@ -13,6 +13,7 @@ for (const row of document.querySelectorAll('.folder-tree .folder-row')) {
             for (const r of row.parentElement.querySelectorAll(`tr.day-row[data-parent="${ym}"]`)) r.remove();
             row.dataset.expanded = '0';
             if (caret) caret.textContent = '▸';
+            history.replaceState(null, '', location.pathname);
             return;
         }
         let days = row._days;
@@ -42,7 +43,14 @@ for (const row of document.querySelectorAll('.folder-tree .folder-row')) {
         row.insertAdjacentHTML('afterend', rows);
         row.dataset.expanded = '1';
         if (caret) caret.textContent = '▾';
+        history.replaceState(null, '', '#' + encodeURIComponent(ym));
     });
+}
+
+const hashYm = decodeURIComponent(location.hash.slice(1));
+if (hashYm) {
+    const targetRow = document.querySelector(`.folder-row[data-ym="${CSS.escape(hashYm)}"]`);
+    if (targetRow) targetRow.querySelector('.folder-toggle')?.click();
 }
 
 for (const cell of document.querySelectorAll('.svg-cell, .svg-full')) {

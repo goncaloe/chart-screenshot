@@ -9,7 +9,11 @@ function foldersPage({ folders }) {
            ${folders.map(f => `<tr class="folder-row" data-ym="${escapeHtml(f)}">
                <td><a href="#" class="folder-toggle"><span class="caret">▸</span> ${escapeHtml(f)}</a></td>
            </tr>`).join('')}
-           </tbody></table>`;
+           </tbody></table>
+           <span>Abrir no terminal:</span>
+           <code>
+               "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe" --remote-debugging-port=9222 --user-data-dir="C:\\ChromeDebugProfile"
+           </code>`;
     return layout({ title: 'Folders', body });
 }
 
