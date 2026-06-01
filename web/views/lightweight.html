@@ -54,7 +54,9 @@ a#tv-attr-logo {
             background: { color: '#000000' },
             textColor: '#cfcfcf',
             panes: {
-                enableResize: false
+                enableResize: true,
+                separatorColor: '#808080',
+                separatorHoverColor: 'rgba(128,128,128,0.5)'
             }
         },
         grid: {
@@ -71,6 +73,9 @@ a#tv-attr-logo {
         },
         rightPriceScale: {
             borderVisible: false,
+        },
+        crosshair: {
+            mode: LightweightCharts.CrosshairMode.Normal,
         },
     });
 
