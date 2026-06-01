@@ -67,7 +67,28 @@ function calculateVWAP(data) {
     return result;
 }
 
-module.exports = function buildPayload(file){
+const TF_SECONDS = { '1m': 60, '5m': 300, '1d': 86400 };
+
+function aggregateCandles(raw, bucketSec) {
+    const out = [];
+    let cur = null;
+    for (const c of raw) {
+        const bucket = Math.floor(c[0] / bucketSec) * bucketSec;
+        if (!cur || cur[0] !== bucket) {
+            if (cur) out.push(cur);
+            cur = [bucket, c[1], c[2], c[3], c[4], c[5]];
+        } else {
+            if (c[2] > cur[2]) cur[2] = c[2];
+            if (c[3] < cur[3]) cur[3] = c[3];
+            cur[4] = c[4];
+            cur[5] += c[5];
+        }
+    }
+    if (cur) out.push(cur);
+    return out;
+}
+
+module.exports = function buildPayload(file, aggregate){
     const filepath = path.join(__dirname, '..', 'data', file);
     if(fs.existsSync(filepath) === false){
         throw new Error('File not found: ' + filepath);
@@ -78,7 +99,18 @@ module.exports = function buildPayload(file){
         throw new Error('Invalid file format: ' + filename);
     }
 
-    const raw = JSON.parse(fs.readFileSync(filepath));    
+    let raw = JSON.parse(fs.readFileSync(filepath));
+    let timeframe = m[2];
+
+    if (aggregate && aggregate !== timeframe) {
+        const srcSec = TF_SECONDS[timeframe];
+        const dstSec = TF_SECONDS[aggregate];
+        if (!srcSec || !dstSec) throw new Error('Invalid aggregate timeframe: ' + aggregate);
+        if (dstSec <= srcSec) throw new Error(`Cannot aggregate ${timeframe} to ${aggregate}`);
+        raw = aggregateCandles(raw, dstSec);
+        timeframe = aggregate;
+    }
+
     const candles = normalizeCandles(raw);
 
     let result = {
@@ -87,12 +119,12 @@ module.exports = function buildPayload(file){
         ema9: calculateEMA(candles, 9),
         ema20: calculateEMA(candles, 20),
         symbol: m[1],
-        timeframe: m[2],
+        timeframe: timeframe,
         folder: path.dirname(file),
         filename: filename,
     };
 
-    if(m[2] === '1m' || m[2] === '5m'){
+    if(timeframe === '1m' || timeframe === '5m'){
         result.vwap = calculateVWAP(candles);
         result.ema80 = calculateEMA(candles, 80);
     }

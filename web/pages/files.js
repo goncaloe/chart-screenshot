@@ -4,7 +4,6 @@ const { riskBadge, fmtChange } = require('./components');
 function filesPage({ ym, dd, files, timeframe }) {
     const rows = files.map(f => {
         const link = `/file/${encodeURIComponent(ym)}/${encodeURIComponent(f.dd)}/${encodeURIComponent(f.name)}`;
-        const chartHref = `/chart/${encodeURIComponent(ym)}/${encodeURIComponent(f.dd)}/${encodeURIComponent(f.name)}`;
         const lightweightHref = `/lightweight/${encodeURIComponent(ym)}/${encodeURIComponent(f.dd)}/${encodeURIComponent(f.name)}`;
         const showDilution = f.timeframe === '1m' || f.timeframe === '5m';
         const dilutionCell = showDilution
@@ -20,7 +19,7 @@ function filesPage({ ym, dd, files, timeframe }) {
             <td class="svg-cell" data-tf="${escapeHtml(f.timeframe)}" data-candles='${attr(f.candles)}'></td>
             <td style="text-align: center;"><input type="checkbox" disabled${f.hasPrint ? ' checked' : ''}></td>
             <td style="text-align: center;">${dilutionCell}</td>
-            <td style="text-align: right;"><a href="${chartHref}">chart</a> | <a href="${lightweightHref}">lightweight</a></td>
+            <td style="text-align: right;"><a href="${lightweightHref}">lightweight</a>${f.timeframe === '1m' ? ` <a href="${lightweightHref}?aggregate=5m">(5m)</a>` : ''}</td>
         </tr>`;
     }).join('');
 
